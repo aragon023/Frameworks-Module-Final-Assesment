@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { Container, Row, Col, Button, Card, Spinner } from "react-bootstrap";
 import { useQuery } from "@tanstack/react-query";
 import DashboardLayout from "./layouts/DashboardLayout";
+import TaskModal from "./components/TaskModal";
+
 
 interface Task {
   id: number;
@@ -27,6 +30,7 @@ interface DashboardData {
 }
 
 export default function App() {
+  const [showTaskModal, setShowTaskModal] = useState(false);
  
 const API_BASE = import.meta.env.VITE_API_BASE as string;
 
@@ -69,7 +73,9 @@ const { data, isLoading, error } = useQuery<DashboardData>({
             </p>
           </Col>
           <Col xs="auto">
-            <Button variant="success">+ Add New Task</Button>
+            <Button variant="success" onClick={() => setShowTaskModal(true)}>
+              + Add New Task
+            </Button>
           </Col>
         </Row>
 
@@ -111,6 +117,14 @@ const { data, isLoading, error } = useQuery<DashboardData>({
           </Col>
         </Row>
       </Container>
+
+    <TaskModal
+        show={showTaskModal}
+        onHide={() => setShowTaskModal(false)}
+        householdId={1}
+        initialTask={null}
+      />
+
     </DashboardLayout>
   );
 }
