@@ -27,11 +27,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
 
             <div className="d-grid gap-2 mb-3">
-              <Button variant="light" className="text-start">🏠 Dashboard</Button>
+              <Button variant="light" className="text-start" href="/">🏠 Dashboard</Button>
+              <Button variant="light" className="text-start" href="/tasks">📋 Tasks</Button>
               <Button variant="light" className="text-start">📅 Calendar</Button>
               <Button variant="light" className="text-start">⭐ Rewards</Button>
               <Button variant="light" className="text-start">⚙️ Settings</Button>
             </div>
+
 
             <div className="text-muted small mb-2">Family</div>
             {isLoading ? (

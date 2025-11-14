@@ -39,7 +39,9 @@ type TaskFilters = {
   assignee_member?: number;
   assignee_pet?: number;
   completed?: boolean;
+  priority?: "low" | "med" | "high";
 };
+
 
 // Helper: build query string from filters
 function buildQuery(filters: TaskFilters = {}): string {
@@ -50,6 +52,8 @@ function buildQuery(filters: TaskFilters = {}): string {
   if (filters.assignee_member != null) params.set("assignee_member", String(filters.assignee_member));
   if (filters.assignee_pet != null) params.set("assignee_pet", String(filters.assignee_pet));
   if (filters.completed != null) params.set("completed", filters.completed ? "true" : "false");
+  if (filters.priority) params.set("priority", filters.priority);
+
   const qs = params.toString();
   return qs ? `?${qs}` : "";
 }
