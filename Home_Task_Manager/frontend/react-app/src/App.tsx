@@ -3,6 +3,8 @@ import { Container, Row, Col, Button, Card, Spinner } from "react-bootstrap";
 import { useQuery } from "@tanstack/react-query";
 import DashboardLayout from "./layouts/DashboardLayout";
 import TaskModal from "./components/TaskModal";
+import { useUpdateTask, useDeleteTask } from "./hooks/useTasks";
+
 
 
 interface Task {
@@ -42,6 +44,18 @@ const { data, isLoading, error } = useQuery<DashboardData>({
     return res.json();
   },
 });
+
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
+
+  const handleToggleCompleted = (id: number, currentCompleted: boolean) => {
+    updateTask.mutate({ id, data: { completed: !currentCompleted } });
+  };
+
+  const handleDeleteTask = (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+    deleteTask.mutate(id);
+  };
 
 
   console.log("App component rendered"); // Debugging log
@@ -86,11 +100,33 @@ const { data, isLoading, error } = useQuery<DashboardData>({
               data.overdue.map((task) => (
                 <Card key={task.id} className="mb-2 shadow-sm">
                   <Card.Body>
-                    <Card.Title>{task.title}</Card.Title>
-                    <Card.Text className="text-danger">
+                    <Card.Title className="d-flex justify-content-between align-items-center">
+                      <span>{task.title}</span>
+                      <small className="text-uppercase text-danger fw-semibold">
+                        {task.priority}
+                      </small>
+                    </Card.Title>
+                    <Card.Text className="text-danger mb-2">
                       Due date: {task.due_date ? new Date(task.due_date).toLocaleString() : "N/A"}
                     </Card.Text>
+                    <div className="d-flex gap-2">
+                      <Button
+                        size="sm"
+                        variant={task.completed ? "outline-secondary" : "success"}
+                        onClick={() => handleToggleCompleted(task.id, task.completed)}
+                      >
+                        {task.completed ? "Mark as not done" : "Mark as done"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline-danger"
+                        onClick={() => handleDeleteTask(task.id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </Card.Body>
+
                 </Card>
               ))
             ) : (
@@ -104,10 +140,31 @@ const { data, isLoading, error } = useQuery<DashboardData>({
               data.upcoming.map((task) => (
                 <Card key={task.id} className="mb-2 shadow-sm">
                   <Card.Body>
-                    <Card.Title>{task.title}</Card.Title>
-                    <Card.Text className="text-success">
+                    <Card.Title className="d-flex justify-content-between align-items-center">
+                      <span>{task.title}</span>
+                      <small className="text-uppercase text-success fw-semibold">
+                        {task.priority}
+                      </small>
+                    </Card.Title>
+                    <Card.Text className="text-success mb-2">
                       Due: {task.due_date ? new Date(task.due_date).toLocaleString() : "N/A"}
                     </Card.Text>
+                    <div className="d-flex gap-2">
+                      <Button
+                        size="sm"
+                        variant={task.completed ? "outline-secondary" : "success"}
+                        onClick={() => handleToggleCompleted(task.id, task.completed)}
+                      >
+                        {task.completed ? "Mark as not done" : "Mark as done"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline-danger"
+                        onClick={() => handleDeleteTask(task.id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </Card.Body>
                 </Card>
               ))
