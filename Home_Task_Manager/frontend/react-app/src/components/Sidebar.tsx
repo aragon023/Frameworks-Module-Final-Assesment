@@ -13,12 +13,12 @@ export default function Sidebar({ show, onHide, householdId = 1 }: SidebarProps)
   return (
     <Offcanvas show={show} onHide={onHide} scroll backdrop className="bg-light" style={{ width: 280 }}>
       <Offcanvas.Header closeButton>
-        <Offcanvas.Title className="fw-bold">FamFlow</Offcanvas.Title>
+        <Offcanvas.Title className="fw-bold">HomeTasker</Offcanvas.Title>
       </Offcanvas.Header>
       <Offcanvas.Body>
         <div className="mb-4">
           <div className="text-muted small">Household</div>
-          <div className="fw-semibold">The Miller Family</div>
+          <div className="fw-semibold">Aragon Family</div>
         </div>
 
        <Nav className="flex-column gap-2 mb-4">

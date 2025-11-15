@@ -20,10 +20,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <Container fluid>
         <Row>
           <Col md={3} lg={2} className="d-none d-md-block border-end bg-white min-vh-100 p-3">
-            <div className="fw-bold fs-5 mb-3">FamFlow</div>
+            <div className="fw-bold fs-5 mb-3">HomeTasker</div>
             <div className="mb-3">
               <div className="text-muted small">Household</div>
-              <div className="fw-semibold">The Miller Family</div>
+              <div className="fw-semibold">Aragon Family</div>
             </div>
 
             <div className="d-grid gap-2 mb-3">
