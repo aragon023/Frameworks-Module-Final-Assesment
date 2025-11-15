@@ -18,6 +18,8 @@ import {
 } from "../hooks/useTasks";
 import { useMembers } from "../hooks/useMembers";
 import TaskModal from "../components/TaskModal";
+import { useCategories } from "../hooks/useCategories";
+
 
 // ---- helpers ---------------------------------------------------------
 
@@ -93,6 +95,13 @@ export default function TasksPage() {
       acc[m.id] = m.name;
       return acc;
     }, {}) ?? {};
+
+  const categories = useCategories();
+  const categoryById =
+    categories.data?.reduce<Record<number, string>>((acc, c) => {
+      acc[c.id] = c.name;
+      return acc;
+    }, {}) ?? {};  
 
   const openCreate = () => {
     setEditingTask(null);
@@ -220,6 +229,10 @@ export default function TasksPage() {
               ? memberById[task.assignee_member] ?? "Unknown"
               : "Unassigned";
 
+            const categoryName = task.category
+              ? categoryById[task.category] ?? "Uncategorised"
+              : "Uncategorised";
+
             return (
               <Card key={task.id} className="mb-2 shadow-sm">
                 <Card.Body>
@@ -227,7 +240,12 @@ export default function TasksPage() {
                     <Col>
                       <div className="d-flex justify-content-between align-items-center mb-1">
                         <h5 className="mb-0">{task.title}</h5>
-                        {priorityBadge(task.priority)}
+                        <div className="d-flex align-items-center gap-2">
+                          {categoryName && categoryName !== "Uncategorised" && (
+                            <Badge bg="secondary">{categoryName}</Badge>
+                          )}
+                          {priorityBadge(task.priority)}
+                        </div>
                       </div>
                       <div className="small text-muted">
                         {formatDueDate(task.due_date)}
@@ -272,6 +290,7 @@ export default function TasksPage() {
             </Card.Body>
           </Card>
         )}
+
 
         {/* Modal for create/edit */}
         <TaskModal
