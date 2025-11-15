@@ -21,13 +21,15 @@ export default function Sidebar({ show, onHide, householdId = 1 }: SidebarProps)
           <div className="fw-semibold">Aragon Family</div>
         </div>
 
-       <Nav className="flex-column gap-2 mb-4">
-        <Nav.Link href="/" className="btn btn-light text-start">🏠 Dashboard</Nav.Link>
-        <Nav.Link href="/tasks" className="btn btn-light text-start">📋 Tasks</Nav.Link>
-        <Nav.Link className="btn btn-light text-start">📅 Calendar</Nav.Link>
-        <Nav.Link className="btn btn-light text-start">⭐ Rewards</Nav.Link>
-        <Nav.Link className="btn btn-light text-start">⚙️ Settings</Nav.Link>
-      </Nav>
+        <Nav className="flex-column gap-2 mb-4">
+          <Nav.Link href="/" className="btn btn-light text-start">🏠 Dashboard</Nav.Link>
+          <Nav.Link href="/tasks" className="btn btn-light text-start">📋 Tasks</Nav.Link>
+          <Nav.Link href="/categories" className="btn btn-light text-start">📂 Categories</Nav.Link>
+          <Nav.Link className="btn btn-light text-start">📅 Calendar</Nav.Link>
+          <Nav.Link className="btn btn-light text-start">⭐ Rewards</Nav.Link>
+          <Nav.Link className="btn btn-light text-start">⚙️ Settings</Nav.Link>
+        </Nav>
+
 
 
         <div className="text-muted small mb-2">Family</div>

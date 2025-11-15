@@ -144,7 +144,21 @@ class TaskViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     """
     Simple CRUD for categories.
-    For now we don't filter by household, but we can add that later.
+    Currently assigns all new categories to household 1 by default.
     """
     queryset = Category.objects.all().order_by("name")
     serializer_class = CategorySerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        household = self.request.query_params.get("household")
+        if household:
+            qs = qs.filter(household_id=household)
+        else:
+            # For now default to household 1 in lists too (MVP)
+            qs = qs.filter(household_id=1)
+        return qs
+
+    def perform_create(self, serializer):
+        # MVP: always assign to household 1
+        serializer.save(household_id=1)

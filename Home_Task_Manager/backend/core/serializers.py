@@ -4,8 +4,8 @@ from .models import Task, Member, Category, Pet
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ["id", "name"]
-
+        fields = ["id", "name", "household"]
+        read_only_fields = ["household"]
 
 class MemberSerializer(serializers.ModelSerializer):
     class Meta:
