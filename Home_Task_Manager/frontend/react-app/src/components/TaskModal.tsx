@@ -3,6 +3,8 @@ import { Modal, Button, Form, Row, Col, Alert, Spinner } from "react-bootstrap";
 import { useMembers } from "../hooks/useMembers";
 import { useCreateTask, useUpdateTask } from "../hooks/useTasks";
 import type { Task, TaskPayload } from "../hooks/useTasks";
+import { useCategories } from "../hooks/useCategories";
+
 
 
 type TaskModalProps = {
@@ -39,29 +41,38 @@ export default function TaskModal({
   const [dueDate, setDueDate] = useState<string>("");
   const [assigneeMemberId, setAssigneeMemberId] = useState<string>("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [categoryId, setCategoryId] = useState<string>("");
+
 
   const { data: members, isLoading: membersLoading } = useMembers(householdId);
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
+
 
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
 
   // Reset form whenever modal opens or initialTask changes
-  useEffect(() => {
-    if (initialTask) {
-      setTitle(initialTask.title);
-      setDescription(initialTask.description || "");
-      setPriority(initialTask.priority);
-      setDueDate(toDateTimeLocal(initialTask.due_date));
-      setAssigneeMemberId(initialTask.assignee_member ? String(initialTask.assignee_member) : "");
-    } else {
-      setTitle("");
-      setDescription("");
-      setPriority("low");
-      setDueDate("");
-      setAssigneeMemberId("");
-    }
-    setFormError(null);
-  }, [initialTask, show]);
+ useEffect(() => {
+  if (initialTask) {
+    setTitle(initialTask.title);
+    setDescription(initialTask.description || "");
+    setPriority(initialTask.priority);
+    setDueDate(toDateTimeLocal(initialTask.due_date));
+    setAssigneeMemberId(
+      initialTask.assignee_member ? String(initialTask.assignee_member) : ""
+    );
+    setCategoryId(initialTask.category ? String(initialTask.category) : "");
+  } else {
+    setTitle("");
+    setDescription("");
+    setPriority("low");
+    setDueDate("");
+    setAssigneeMemberId("");
+    setCategoryId("");
+  }
+  setFormError(null);
+}, [initialTask, show]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,9 +91,9 @@ export default function TaskModal({
       due_date: dueDate ? new Date(dueDate).toISOString() : null,
       assignee_member: assigneeMemberId ? Number(assigneeMemberId) : null,
       assignee_pet: null,
-      // category left null for now (MVP)
-      category: undefined,
+      category: categoryId ? Number(categoryId) : null,
     };
+
 
     try {
       if (isEdit && initialTask) {
@@ -154,6 +165,28 @@ export default function TaskModal({
               </Form.Group>
             </Col>
           </Row>
+
+          <Form.Group className="mb-3" controlId="taskCategory">
+            <Form.Label>Category</Form.Label>
+            {categoriesLoading ? (
+              <div className="d-flex align-items-center gap-2">
+                <Spinner animation="border" size="sm" /> <span>Loading categories…</span>
+              </div>
+            ) : (
+              <Form.Select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+              >
+                <option value="">No category</option>
+                {(categories ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </Form.Select>
+            )}
+          </Form.Group>
+
 
           <Form.Group className="mb-3" controlId="taskAssignee">
             <Form.Label>Assign to</Form.Label>
