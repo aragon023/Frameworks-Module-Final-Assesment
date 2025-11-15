@@ -7,11 +7,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets
 
-from .models import Task, Member
+from .models import Task, Member, Category
 from .serializers import (
     TaskRowSerializer,
     MemberSerializer,
     TaskSerializer,
+    CategorySerializer,
 )
 
 
@@ -138,3 +139,12 @@ class TaskViewSet(viewsets.ModelViewSet):
         if not was_completed and obj.completed and obj.completed_at is None:
             obj.completed_at = _tz.now()
             obj.save(update_fields=["completed_at"])
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    """
+    Simple CRUD for categories.
+    For now we don't filter by household, but we can add that later.
+    """
+    queryset = Category.objects.all().order_by("name")
+    serializer_class = CategorySerializer
