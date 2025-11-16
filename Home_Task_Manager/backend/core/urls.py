@@ -1,11 +1,19 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import DashboardView, MembersListView, TaskViewSet, CategoryViewSet, MemberViewSet
+from .views import (
+    DashboardView,
+    MembersListView,
+    TaskViewSet,
+    CategoryViewSet,
+    MemberViewSet,
+    PetViewSet,
+)
 
 router = DefaultRouter()
 router.register(r"tasks", TaskViewSet, basename="task")
 router.register(r"categories", CategoryViewSet, basename="category")
 router.register(r"member-items", MemberViewSet, basename="member")
+router.register(r"pets", PetViewSet, basename="pet")
 
 urlpatterns = [
     path("dashboard/", DashboardView.as_view(), name="dashboard"),

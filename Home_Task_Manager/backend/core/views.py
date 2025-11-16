@@ -7,12 +7,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets
 
-from .models import Task, Member, Category
+from .models import Task, Member, Category, Pet
 from .serializers import (
     TaskRowSerializer,
     MemberSerializer,
     TaskSerializer,
     CategorySerializer,
+    PetSerializer,
 )
 
 
@@ -98,6 +99,29 @@ class MemberViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # MVP: assign new members to household 1
         serializer.save(household_id=1)
+
+class PetViewSet(viewsets.ModelViewSet):
+    """
+    CRUD for pets.
+    Pets are linked to tasks but not responsible for them.
+    """
+    queryset = Pet.objects.all().order_by("name")
+    serializer_class = PetSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        household = self.request.query_params.get("household")
+        if household:
+            qs = qs.filter(household_id=household)
+        else:
+            # MVP: default to household 1
+            qs = qs.filter(household_id=1)
+        return qs
+
+    def perform_create(self, serializer):
+        # MVP: all pets belong to household 1
+        serializer.save(household_id=1)
+
 
 
 class TaskViewSet(viewsets.ModelViewSet):

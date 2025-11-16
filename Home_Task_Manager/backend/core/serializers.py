@@ -12,6 +12,13 @@ class MemberSerializer(serializers.ModelSerializer):
         model = Member
         fields = ["id", "name", "avatar_url"]
 
+class PetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pet
+        fields = ["id", "name", "icon", "household"]
+        read_only_fields = ["household"]
+
+
 class TaskRowSerializer(serializers.ModelSerializer):
     """
     Minimal serializer for the dashboard lists.
