@@ -4,6 +4,8 @@ import { useMembers } from "../hooks/useMembers";
 import { useCreateTask, useUpdateTask } from "../hooks/useTasks";
 import type { Task, TaskPayload } from "../hooks/useTasks";
 import { useCategories } from "../hooks/useCategories";
+import { usePets } from "../hooks/usePets";
+
 
 
 
@@ -42,11 +44,12 @@ export default function TaskModal({
   const [assigneeMemberId, setAssigneeMemberId] = useState<string>("");
   const [formError, setFormError] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState<string>("");
+  const [petId, setPetId] = useState<string>("");
 
 
   const { data: members, isLoading: membersLoading } = useMembers(householdId);
   const { data: categories, isLoading: categoriesLoading } = useCategories();
-
+  const { data: pets, isLoading: petsLoading } = usePets(householdId);
 
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
@@ -62,6 +65,7 @@ export default function TaskModal({
       initialTask.assignee_member ? String(initialTask.assignee_member) : ""
     );
     setCategoryId(initialTask.category ? String(initialTask.category) : "");
+    setPetId(initialTask.assignee_pet ? String(initialTask.assignee_pet) : "");
   } else {
     setTitle("");
     setDescription("");
@@ -69,10 +73,10 @@ export default function TaskModal({
     setDueDate("");
     setAssigneeMemberId("");
     setCategoryId("");
+    setPetId("");
   }
   setFormError(null);
 }, [initialTask, show]);
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,16 +87,17 @@ export default function TaskModal({
       return;
     }
 
-    const payload: TaskPayload = {
-      household: householdId,
-      title: title.trim(),
-      description: description.trim() || "",
-      priority,
-      due_date: dueDate ? new Date(dueDate).toISOString() : null,
-      assignee_member: assigneeMemberId ? Number(assigneeMemberId) : null,
-      assignee_pet: null,
-      category: categoryId ? Number(categoryId) : null,
-    };
+  const payload: TaskPayload = {
+    household: householdId,
+    title: title.trim(),
+    description: description.trim() || "",
+    priority,
+    due_date: dueDate ? new Date(dueDate).toISOString() : null,
+    assignee_member: assigneeMemberId ? Number(assigneeMemberId) : null,
+    assignee_pet: petId ? Number(petId) : null,
+    category: categoryId ? Number(categoryId) : null,
+  };
+
 
 
     try {
@@ -186,6 +191,28 @@ export default function TaskModal({
               </Form.Select>
             )}
           </Form.Group>
+
+          <Form.Group className="mb-3" controlId="taskPet">
+            <Form.Label>Related pet</Form.Label>
+            {petsLoading ? (
+              <div className="d-flex align-items-center gap-2">
+                <Spinner animation="border" size="sm" /> <span>Loading pets…</span>
+              </div>
+            ) : (
+              <Form.Select
+                value={petId}
+                onChange={(e) => setPetId(e.target.value)}
+              >
+                <option value="">No related pet</option>
+                {(pets ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.icon ? `${p.icon} ${p.name}` : p.name}
+                  </option>
+                ))}
+              </Form.Select>
+            )}
+          </Form.Group>
+
 
 
           <Form.Group className="mb-3" controlId="taskAssignee">

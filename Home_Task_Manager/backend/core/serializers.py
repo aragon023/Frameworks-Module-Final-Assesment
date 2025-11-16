@@ -74,16 +74,3 @@ class TaskSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["created_at", "updated_at"]
 
-    def validate(self, attrs):
-        """
-        Prevents assigning BOTH a pet and a member at the same time.
-        """
-        member = attrs.get("assignee_member")
-        pet = attrs.get("assignee_pet")
-
-        if member and pet:
-            raise serializers.ValidationError(
-                "Provide assignee_member OR assignee_pet, not both."
-            )
-
-        return attrs
