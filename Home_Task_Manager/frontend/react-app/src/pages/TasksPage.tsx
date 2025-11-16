@@ -76,6 +76,8 @@ export default function TasksPage() {
   const [priority, setPriority] = useState<"" | "low" | "med" | "high">("");
   const [completed, setCompleted] = useState("");
   const [assignee, setAssignee] = useState("");
+  const [category, setCategory] = useState("");
+
 
   const members = useMembers(1);
   const tasks = useTasks({
@@ -83,6 +85,7 @@ export default function TasksPage() {
     search,
     completed: completed ? completed === "true" : undefined,
     priority: priority || undefined,
+    category: category ? Number(category) : undefined,
     assignee_member: assignee ? Number(assignee) : undefined,
   });
 
@@ -127,6 +130,7 @@ export default function TasksPage() {
     setPriority("");
     setCompleted("");
     setAssignee("");
+    setCategory("");
   };
 
   return (
@@ -165,9 +169,7 @@ export default function TasksPage() {
                 <Form.Select
                   value={priority}
                   onChange={(e) =>
-                    setPriority(
-                      e.target.value as "" | "low" | "med" | "high"
-                    )
+                    setPriority(e.target.value as "" | "low" | "med" | "high")
                   }
                 >
                   <option value="">All priorities</option>
@@ -189,7 +191,23 @@ export default function TasksPage() {
                 </Form.Select>
               </Col>
 
-              <Col md={3}>
+              <Col md={2}>
+                <Form.Label className="small text-muted">Category</Form.Label>
+                <Form.Select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  disabled={categories.isLoading}
+                >
+                  <option value="">All categories</option>
+                  {categories.data?.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Col>
+
+              <Col md={2}>
                 <Form.Label className="small text-muted">Assignee</Form.Label>
                 <Form.Select
                   value={assignee}
@@ -205,18 +223,19 @@ export default function TasksPage() {
                 </Form.Select>
               </Col>
 
-              <Col md={2} className="text-md-end">
+              <Col md={1} className="text-md-end">
                 <Button
                   variant="outline-secondary"
                   size="sm"
                   onClick={resetFilters}
                 >
-                  Reset filters
+                  Reset
                 </Button>
               </Col>
             </Row>
           </Card.Body>
         </Card>
+
 
         {/* Task List */}
         {tasks.isLoading ? (
