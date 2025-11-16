@@ -3,6 +3,8 @@ import App from "./App";
 import TasksPage from "./pages/TasksPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import MembersPage from "./pages/MembersPage";
+import PetsPage from "./pages/PetsPage";
+
 
 
 
@@ -21,6 +23,9 @@ export default function AppRoutes() {
 
         {/* Members Management */}
         <Route path="/members" element={<MembersPage />} />
+
+        {/* Pets Management */}
+        <Route path="/pets" element={<PetsPage />} />
       </Routes>
     </BrowserRouter>
   );
