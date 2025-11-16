@@ -25,6 +25,7 @@ export default function Sidebar({ show, onHide, householdId = 1 }: SidebarProps)
           <Nav.Link href="/" className="btn btn-light text-start">🏠 Dashboard</Nav.Link>
           <Nav.Link href="/tasks" className="btn btn-light text-start">📋 Tasks</Nav.Link>
           <Nav.Link href="/categories" className="btn btn-light text-start">📂 Categories</Nav.Link>
+          <Nav.Link href="/members" className="btn btn-light text-start">👨‍👩‍👧 Family</Nav.Link>
           <Nav.Link className="btn btn-light text-start">📅 Calendar</Nav.Link>
           <Nav.Link className="btn btn-light text-start">⭐ Rewards</Nav.Link>
           <Nav.Link className="btn btn-light text-start">⚙️ Settings</Nav.Link>

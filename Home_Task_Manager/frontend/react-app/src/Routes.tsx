@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./App";
 import TasksPage from "./pages/TasksPage";
 import CategoriesPage from "./pages/CategoriesPage";
+import MembersPage from "./pages/MembersPage";
+
 
 
 export default function AppRoutes() {
@@ -16,6 +18,9 @@ export default function AppRoutes() {
 
         {/* Categories Management */}
         <Route path="/categories" element={<CategoriesPage />} />
+
+        {/* Members Management */}
+        <Route path="/members" element={<MembersPage />} />
       </Routes>
     </BrowserRouter>
   );
