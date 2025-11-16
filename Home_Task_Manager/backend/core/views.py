@@ -75,6 +75,30 @@ class MembersListView(APIView):
             qs = qs.filter(household_id=household_id)
         data = MemberSerializer(qs.order_by("name"), many=True).data
         return Response(data)
+    
+
+class MemberViewSet(viewsets.ModelViewSet):
+    """
+    CRUD for members (family).
+    Uses /api/member-items/ to avoid clashing with /api/members/ (list-only).
+    """
+    queryset = Member.objects.all().order_by("name")
+    serializer_class = MemberSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        household = self.request.query_params.get("household")
+        if household:
+            qs = qs.filter(household_id=household)
+        else:
+            # MVP: default to household 1
+            qs = qs.filter(household_id=1)
+        return qs
+
+    def perform_create(self, serializer):
+        # MVP: assign new members to household 1
+        serializer.save(household_id=1)
+
 
 class TaskViewSet(viewsets.ModelViewSet):
     """
