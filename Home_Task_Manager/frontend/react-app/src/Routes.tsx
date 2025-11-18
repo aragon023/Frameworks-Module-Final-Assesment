@@ -4,6 +4,8 @@ import TasksPage from "./pages/TasksPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import MembersPage from "./pages/MembersPage";
 import PetsPage from "./pages/PetsPage";
+import LoginPage from "./pages/LoginPage";
+
 
 
 
@@ -12,6 +14,10 @@ export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
+
+        {/* Login Page */}
+        <Route path="/login" element={<LoginPage />} />
+
         {/* Dashboard (Root) */}
         <Route path="/" element={<App />} />
 

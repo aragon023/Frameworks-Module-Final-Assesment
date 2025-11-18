@@ -3,10 +3,18 @@ import type { ReactNode } from "react";
 import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
 import Sidebar from "../components/Sidebar";
 import { useMembers } from "../hooks/useMembers";
+import { useNavigate } from "react-router-dom";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [showSidebar, setShowSidebar] = useState(false);
   const { data: members, isLoading, error } = useMembers(1);
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    navigate("/login");
+};
+
 
   return (
     <div className="min-vh-100 bg-light">
@@ -68,6 +76,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </Col>
 
           <Col xs={12} md={9} lg={10} className="p-3">
+            <div className="d-flex justify-content-end mb-3">
+              <Button variant="outline-secondary" size="sm" onClick={handleLogout}>
+                Log out
+              </Button>
+            </div>
             {children}
           </Col>
         </Row>
