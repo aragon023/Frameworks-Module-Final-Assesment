@@ -5,33 +5,58 @@ import CategoriesPage from "./pages/CategoriesPage";
 import MembersPage from "./pages/MembersPage";
 import PetsPage from "./pages/PetsPage";
 import LoginPage from "./pages/LoginPage";
-
-
-
-
+import RequireAuth from "./components/RequireAuth";
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-
-        {/* Login Page */}
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Dashboard (Root) */}
-        <Route path="/" element={<App />} />
+        <Route
+          path="/"
+          element={
+            <RequireAuth>
+              <App />
+            </RequireAuth>
+          }
+        />
 
-        {/* Full Tasks Page */}
-        <Route path="/tasks" element={<TasksPage />} />
+        <Route
+          path="/tasks"
+          element={
+            <RequireAuth>
+              <TasksPage />
+            </RequireAuth>
+          }
+        />
 
-        {/* Categories Management */}
-        <Route path="/categories" element={<CategoriesPage />} />
+        <Route
+          path="/members"
+          element={
+            <RequireAuth>
+              <MembersPage />
+            </RequireAuth>
+          }
+        />
 
-        {/* Members Management */}
-        <Route path="/members" element={<MembersPage />} />
+        <Route
+          path="/pets"
+          element={
+            <RequireAuth>
+              <PetsPage />
+            </RequireAuth>
+          }
+        />
 
-        {/* Pets Management */}
-        <Route path="/pets" element={<PetsPage />} />
+        <Route
+          path="/categories"
+          element={
+            <RequireAuth>
+              <CategoriesPage />
+            </RequireAuth>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
