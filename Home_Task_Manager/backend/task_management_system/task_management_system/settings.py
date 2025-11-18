@@ -110,7 +110,7 @@ CORS_ALLOW_ALL_ORIGINS = True  # development only
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Europe/Dublin'  # ← keep your local time zone
+TIME_ZONE = 'Europe/Dublin'  
 USE_I18N = True
 USE_TZ = True
 
@@ -122,5 +122,14 @@ STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+
+# Django REST Framework global settings
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    # For now we won't enforce auth globally; we'll do that later per-view if needed.
+}
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
