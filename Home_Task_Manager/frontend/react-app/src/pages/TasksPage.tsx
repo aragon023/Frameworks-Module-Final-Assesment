@@ -19,6 +19,8 @@ import {
 import { useMembers } from "../hooks/useMembers";
 import TaskModal from "../components/TaskModal";
 import { useCategories } from "../hooks/useCategories";
+import { usePets } from "../hooks/usePets";
+
 
 
 // ---- helpers ---------------------------------------------------------
@@ -80,6 +82,7 @@ export default function TasksPage() {
 
 
   const members = useMembers(1);
+  const petsQuery = usePets(1);
   const tasks = useTasks({
     householdId: 1,
     search,
@@ -91,6 +94,8 @@ export default function TasksPage() {
 
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
+
+
 
   // Map members by id for quick lookup
   const memberById =
@@ -104,7 +109,13 @@ export default function TasksPage() {
     categories.data?.reduce<Record<number, string>>((acc, c) => {
       acc[c.id] = c.name;
       return acc;
-    }, {}) ?? {};  
+    }, {}) ?? {}; 
+    
+  const petById =
+  petsQuery.data?.reduce<Record<number, string>>((acc, p) => {
+    acc[p.id] = p.name;
+    return acc;
+  }, {}) ?? {};
 
   const openCreate = () => {
     setEditingTask(null);
@@ -252,6 +263,10 @@ export default function TasksPage() {
               ? categoryById[task.category] ?? "Uncategorised"
               : "Uncategorised";
 
+            const petName = task.assignee_pet
+              ? petById[task.assignee_pet] ?? "Unknown Pet"
+              : null;
+
             return (
               <Card key={task.id} className="mb-2 shadow-sm">
                 <Card.Body>
@@ -266,13 +281,22 @@ export default function TasksPage() {
                           {priorityBadge(task.priority)}
                         </div>
                       </div>
+
                       <div className="small text-muted">
                         {formatDueDate(task.due_date)}
                       </div>
+
                       <div className="small text-muted">
                         Assigned to: {assigneeName}
                       </div>
+
+                      {petName && (
+                        <div className="small text-muted">
+                          Related pet: 🐾 {petName}
+                        </div>
+                      )}
                     </Col>
+
                     <Col xs="auto" className="d-flex gap-2">
                       <Button
                         variant={task.completed ? "outline-secondary" : "success"}
