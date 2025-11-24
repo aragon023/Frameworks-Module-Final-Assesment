@@ -7,6 +7,7 @@ from .views import (
     CategoryViewSet,
     MemberViewSet,
     PetViewSet,
+    RegisterView,
 )
 
 router = DefaultRouter()
@@ -18,5 +19,6 @@ router.register(r"pets", PetViewSet, basename="pet")
 urlpatterns = [
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
     path("members/", MembersListView.as_view(), name="members-list"),
+    path("register/", RegisterView.as_view(), name="register"),
     path("", include(router.urls)),
 ]

@@ -1,11 +1,12 @@
 from datetime import timedelta
 
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.db.models import Q
 
-from rest_framework.views import APIView
+from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework import viewsets
+from rest_framework.views import APIView
 
 from .models import Task, Member, Category, Pet
 from .serializers import (
@@ -14,7 +15,9 @@ from .serializers import (
     TaskSerializer,
     CategorySerializer,
     PetSerializer,
+    RegisterSerializer,
 )
+
 
 
 class DashboardView(APIView):
@@ -210,3 +213,24 @@ class CategoryViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # MVP: always assign to household 1
         serializer.save(household_id=1)
+
+User = get_user_model()
+
+class RegisterView(APIView):
+    """
+    POST /api/register/
+    Body: { "username": "...", "email": "...", "password": "..." }
+    """
+
+    permission_classes = []  # allow anyone
+
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(
+                {"id": user.id, "username": user.username, "email": user.email},
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
