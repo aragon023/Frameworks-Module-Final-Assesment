@@ -4,10 +4,12 @@ import { useNavigate, Link } from "react-router-dom";
 
 const API_BASE = import.meta.env.VITE_API_BASE as string;
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -15,31 +17,35 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/token/`, {
+      const res = await fetch(`${API_BASE}/api/register/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, email, password }),
       });
 
       if (!res.ok) {
-        setError("Invalid credentials. Please try again.");
+        const data = await res.json().catch(() => ({}));
+        // serializer errors come as field -> [messages], but for MVP:
+        const generic =
+          data.detail ||
+          data.username?.[0] ||
+          data.email?.[0] ||
+          data.password?.[0] ||
+          "Could not create account. Please check your details.";
+        setError(generic);
         setLoading(false);
         return;
       }
 
-      const data = await res.json();
-
-      // Store tokens in localStorage for now
-      localStorage.setItem("accessToken", data.access);
-      localStorage.setItem("refreshToken", data.refresh);
-
+      setSuccess("Account created! Redirecting to sign in…");
       setLoading(false);
 
-      // Redirect to dashboard after login
-      navigate("/");
+      // Redirect to login after a short delay
+      setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");
@@ -53,43 +59,47 @@ export default function LoginPage() {
         <Col>
           <Card className="shadow-sm">
             <Card.Body>
-              <h3 className="fw-bold mb-3 text-center">Sign in</h3>
-              <p className="text-muted text-center mb-4">
-                Log in to manage your household tasks.
-              </p>
+              <h3 className="fw-bold mb-3 text-center">Create an account</h3>
 
               {error && (
                 <Alert variant="danger" className="py-2">
                   {error}
                 </Alert>
               )}
+              {success && (
+                <Alert variant="success" className="py-2">
+                  {success}
+                </Alert>
+              )}
 
               <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-3" controlId="loginUsername">
+                <Form.Group className="mb-3">
                   <Form.Label>Username</Form.Label>
                   <Form.Control
-                    type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    autoComplete="username"
                     required
                   />
                 </Form.Group>
 
-                <Form.Group className="mb-3" controlId="loginPassword">
+                <Form.Group className="mb-3">
+                  <Form.Label>Email</Form.Label>
+                  <Form.Control
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </Form.Group>
+
+                <Form.Group className="mb-3">
                   <Form.Label>Password</Form.Label>
                   <Form.Control
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
                     required
                   />
                 </Form.Group>
-
-                <div className="text-center mt-3 small">
-                  Don&apos;t have an account? <Link to="/register">Create one</Link>
-                </div>
 
                 <Button
                   type="submit"
@@ -97,9 +107,13 @@ export default function LoginPage() {
                   className="w-100"
                   disabled={loading}
                 >
-                  {loading ? "Signing in..." : "Sign in"}
+                  {loading ? "Creating account..." : "Sign up"}
                 </Button>
               </Form>
+
+              <div className="text-center mt-3 small">
+                Already have an account? <Link to="/login">Sign in</Link>
+              </div>
             </Card.Body>
           </Card>
         </Col>
