@@ -4,6 +4,15 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.db.models import Q
 
+from django.conf import settings
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+
+
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,6 +27,35 @@ from .serializers import (
     RegisterSerializer,
 )
 
+password_reset_token = PasswordResetTokenGenerator()
+
+def send_password_reset_email(user, reset_url: str):
+    """
+    Sends a password reset email using SendGrid.
+    If SENDGRID_API_KEY is not set, prints the link to console (development mode).
+    """
+    if not settings.SENDGRID_API_KEY:
+        print("SENDGRID_API_KEY not set. Password reset link:", reset_url)
+        return
+
+    message = Mail(
+        from_email=settings.PASSWORD_RESET_FROM_EMAIL,
+        to_emails=user.email,
+        subject="Reset your password",
+        html_content=f"""
+            <p>Hello {user.username},</p>
+            <p>You requested to reset your password.</p>
+            <p>Click the link below to set a new password:</p>
+            <p><a href="{reset_url}">{reset_url}</a></p>
+            <p>If you did not request this change, simply ignore this email.</p>
+        """,
+    )
+
+    try:
+        sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
+        sg.send(message)
+    except Exception as e:
+        print("Error sending password reset email:", e)
 
 
 class DashboardView(APIView):
@@ -233,4 +271,70 @@ class RegisterView(APIView):
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class PasswordResetRequestView(APIView):
+    """
+    POST /api/password-reset/
+    Body: { "email": "user@example.com" }
+    Always returns success to avoid revealing which emails exist.
+    """
+    permission_classes = []
+
+    def post(self, request):
+        email = request.data.get("email", "").strip()
+
+        if not email:
+            return Response({"detail": "If this email exists, a reset link will be sent."})
+
+        User = get_user_model()
+
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            # Do NOT reveal existence of emails
+            return Response({"detail": "If this email exists, a reset link will be sent."})
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = password_reset_token.make_token(user)
+
+        reset_url = f"{settings.FRONTEND_BASE_URL}/reset-password?uid={uid}&token={token}"
+
+        send_password_reset_email(user, reset_url)
+
+        return Response({"detail": "If this email exists, a reset link will be sent."})
+    
+class PasswordResetConfirmView(APIView):
+    """
+    POST /api/password-reset-confirm/
+    Body: { "uid": "...", "token": "...", "new_password": "..." }
+    """
+    permission_classes = []
+
+    def post(self, request):
+        uid_b64 = request.data.get("uid", "")
+        token = request.data.get("token", "")
+        new_password = request.data.get("new_password", "")
+
+        if not uid_b64 or not token or not new_password:
+            return Response({"detail": "Invalid request."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            uid = force_str(urlsafe_base64_decode(uid_b64))
+            User = get_user_model()
+            user = User.objects.get(pk=uid)
+        except Exception:
+            return Response({"detail": "Invalid token or user."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not password_reset_token.check_token(user, token):
+            return Response({"detail": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(new_password) < 8:
+            return Response({"detail": "Password must be at least 8 characters."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response({"detail": "Password has been reset successfully."})
+
+
 

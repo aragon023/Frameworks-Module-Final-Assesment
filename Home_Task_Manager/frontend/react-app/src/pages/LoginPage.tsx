@@ -87,10 +87,6 @@ export default function LoginPage() {
                   />
                 </Form.Group>
 
-                <div className="text-center mt-3 small">
-                  Don&apos;t have an account? <Link to="/register">Create one</Link>
-                </div>
-
                 <Button
                   type="submit"
                   variant="success"
@@ -100,6 +96,10 @@ export default function LoginPage() {
                   {loading ? "Signing in..." : "Sign in"}
                 </Button>
               </Form>
+
+              <div className="text-center mt-3 small">
+                  Don&apos;t have an account? <Link to="/register">Create one</Link>
+                </div>
             </Card.Body>
           </Card>
         </Col>

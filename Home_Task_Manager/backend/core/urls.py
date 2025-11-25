@@ -8,6 +8,8 @@ from .views import (
     MemberViewSet,
     PetViewSet,
     RegisterView,
+    PasswordResetRequestView,
+    PasswordResetConfirmView,
 )
 
 router = DefaultRouter()
@@ -20,5 +22,7 @@ urlpatterns = [
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
     path("members/", MembersListView.as_view(), name="members-list"),
     path("register/", RegisterView.as_view(), name="register"),
+    path("password-reset/", PasswordResetRequestView.as_view(), name="password-reset"),
+    path("password-reset-confirm/", PasswordResetConfirmView.as_view(), name="password-reset-confirm"),
     path("", include(router.urls)),
 ]
