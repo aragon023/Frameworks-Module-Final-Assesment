@@ -100,6 +100,12 @@ export default function LoginPage() {
               <div className="text-center mt-3 small">
                   Don&apos;t have an account? <Link to="/register">Create one</Link>
                 </div>
+
+                <div className="text-end mt-2">
+                  <Link to="/forgot-password" className="text-sm text-primary-600 hover:underline">
+                    Forgot your password?
+                  </Link>
+                </div>
             </Card.Body>
           </Card>
         </Col>

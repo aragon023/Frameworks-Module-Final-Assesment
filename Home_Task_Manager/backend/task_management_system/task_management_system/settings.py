@@ -149,3 +149,5 @@ ANYMAIL = {
 # Optional: fail loudly during testing
 ANYMAIL_IGNORE_UNSUPPORTED_FEATURES = False
 
+FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:5173")
+
