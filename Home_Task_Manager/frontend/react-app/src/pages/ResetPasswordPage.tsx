@@ -50,7 +50,13 @@ const ResetPasswordPage: React.FC = () => {
         }),
       });
 
-      const data: { detail?: string } = await res.json();
+      let data: { detail?: string } = {};
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text();
+        data = { detail: text };
+      }
 
       if (res.ok) {
         setStatus("success");
@@ -70,68 +76,77 @@ const ResetPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 border rounded-lg shadow-sm bg-white">
-      <h1 className="text-2xl font-semibold mb-4">Set a new password</h1>
+    <div className="container py-5">
+      <div className="row justify-content-center">
+        <div className="col-md-6 col-lg-4">
+          <div className="card shadow-sm">
+            <div className="card-body p-4">
+              <h1 className="h4 text-center mb-3">Set a new password</h1>
+              <p className="text-muted small text-center mb-4">
+                Choose a new password for your account. Make sure it&apos;s
+                something secure that you haven&apos;t used before.
+              </p>
 
-      {!uid || !token ? (
-        <p className="text-sm text-red-600">
-          {message || "Invalid reset link."}
-        </p>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              className="block text-sm font-medium mb-1"
-              htmlFor="new-password"
-            >
-              New password
-            </label>
-            <input
-              id="new-password"
-              type="password"
-              required
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
-            />
+              {status && (
+                <div
+                  className={`alert small ${
+                    status === "success" ? "alert-success" : "alert-danger"
+                  }`}
+                >
+                  {message}
+                </div>
+              )}
+
+              {!uid || !token ? (
+                <p className="text-danger small mb-0">
+                  {message || "Invalid password reset link."}
+                </p>
+              ) : (
+                <form onSubmit={handleSubmit} noValidate>
+                  <div className="mb-3">
+                    <label htmlFor="new-password" className="form-label">
+                      New password
+                    </label>
+                    <input
+                      id="new-password"
+                      type="password"
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="form-control"
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label
+                      htmlFor="confirm-password"
+                      className="form-label"
+                    >
+                      Confirm new password
+                    </label>
+                    <input
+                      id="confirm-password"
+                      type="password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="form-control"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="btn btn-primary w-100"
+                  >
+                    {loading ? "Updating..." : "Update password"}
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
-
-          <div>
-            <label
-              className="block text-sm font-medium mb-1"
-              htmlFor="confirm-password"
-            >
-              Confirm new password
-            </label>
-            <input
-              id="confirm-password"
-              type="password"
-              required
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2 rounded bg-blue-600 text-white text-sm font-medium disabled:opacity-60"
-          >
-            {loading ? "Updating..." : "Update password"}
-          </button>
-        </form>
-      )}
-
-      {status && (
-        <p
-          className={`mt-4 text-sm ${
-            status === "success" ? "text-green-600" : "text-red-600"
-          }`}
-        >
-          {message}
-        </p>
-      )}
+        </div>
+      </div>
     </div>
   );
 };
