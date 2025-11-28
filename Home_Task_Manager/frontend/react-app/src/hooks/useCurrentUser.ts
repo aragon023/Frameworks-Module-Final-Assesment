@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = import.meta.env.VITE_API_BASE as string;
 
 function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem("accessToken");
