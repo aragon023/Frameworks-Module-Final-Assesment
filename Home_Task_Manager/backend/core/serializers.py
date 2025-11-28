@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Task, Member, Category, Pet
 
+User = get_user_model()
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
@@ -75,7 +77,7 @@ class TaskSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["created_at", "updated_at"]
 
-User = get_user_model()
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
@@ -95,5 +97,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+    
+    class CurrentUserSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = User
+            fields = ["id", "username", "email", "first_name", "last_name"]
+            read_only_fields = ["id"]
+
 
 
