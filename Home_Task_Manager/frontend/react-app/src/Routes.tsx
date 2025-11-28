@@ -9,7 +9,7 @@ import RegisterPage from "./pages/RegisterPage";
 import RequireAuth from "./components/RequireAuth";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
-
+import ProfilePage from "./pages/ProfilePage";
 
 export default function AppRoutes() {
   return (
@@ -19,8 +19,10 @@ export default function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} /> 
-
+        <Route
+          path="/reset-password/:uid/:token"
+          element={<ResetPasswordPage />}
+        />
 
         {/* Protected routes */}
         <Route
@@ -64,6 +66,15 @@ export default function AppRoutes() {
           element={
             <RequireAuth>
               <PetsPage />
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <RequireAuth>
+              <ProfilePage />
             </RequireAuth>
           }
         />

@@ -4,16 +4,19 @@ from .models import Task, Member, Category, Pet
 
 User = get_user_model()
 
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ["id", "name", "household"]
         read_only_fields = ["household"]
 
+
 class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = ["id", "name", "avatar_url"]
+
 
 class PetSerializer(serializers.ModelSerializer):
     class Meta:
@@ -52,7 +55,8 @@ class TaskRowSerializer(serializers.ModelSerializer):
                 "type": "pet",
             }
         return None
-    
+
+
 class TaskSerializer(serializers.ModelSerializer):
     """
     Full serializer for creating, updating, and deleting tasks.
@@ -78,7 +82,6 @@ class TaskSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
 
 
-
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
 
@@ -88,7 +91,9 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate_email(self, value):
         if value and User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError("A user with this email already exists.")
+            raise serializers.ValidationError(
+                "A user with this email already exists."
+            )
         return value
 
     def create(self, validated_data):
@@ -97,12 +102,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
-    
-    class CurrentUserSerializer(serializers.ModelSerializer):
-        class Meta:
-            model = User
-            fields = ["id", "username", "email", "first_name", "last_name"]
-            read_only_fields = ["id"]
 
 
-
+class CurrentUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "first_name", "last_name"]
+        read_only_fields = ["id"]
