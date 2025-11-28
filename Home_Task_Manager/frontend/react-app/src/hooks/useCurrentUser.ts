@@ -26,7 +26,7 @@ export function useCurrentUser() {
         ...getAuthHeaders(),
       };
 
-      const res = await fetch(`${API_BASE}/me/`, { headers });
+      const res = await fetch(`${API_BASE}/api/me/`, { headers });
       if (!res.ok) {
         throw new Error("Failed to load user profile");
       }
@@ -45,7 +45,7 @@ export function useCurrentUser() {
         ...getAuthHeaders(),
       };
 
-      const res = await fetch(`${API_BASE}/me/`, {
+      const res = await fetch(`${API_BASE}/api/me/`, {
         method: "PATCH",
         headers,
         body: JSON.stringify(updates),
@@ -72,7 +72,7 @@ export function useCurrentUser() {
         ...getAuthHeaders(),
       };
 
-      const res = await fetch(`${API_BASE}/change-password/`, {
+      const res = await fetch(`${API_BASE}/api/change-password/`, {
         method: "POST",
         headers,
         body: JSON.stringify(payload),
