@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import DashboardLayout from "./layouts/DashboardLayout";
 import TaskModal from "./components/TaskModal";
 import { useUpdateTask, useDeleteTask } from "./hooks/useTasks";
+import { useCurrentUser } from "./hooks/useCurrentUser"; 
 
 
 
@@ -35,6 +36,12 @@ export default function App() {
   const [showTaskModal, setShowTaskModal] = useState(false);
  
 const API_BASE = import.meta.env.VITE_API_BASE as string;
+
+  const { userQuery } = useCurrentUser();
+  const displayName =
+    userQuery.data?.first_name?.trim() ||
+    userQuery.data?.username ||
+    "there";
 
 const { data, isLoading, error } = useQuery<DashboardData>({
   queryKey: ["dashboard"],
@@ -74,13 +81,12 @@ const { data, isLoading, error } = useQuery<DashboardData>({
       </div>
     );
 
-  return (
+   return (
     <DashboardLayout>
       <Container className="py-4">
-        {/*existing JSX below stays the same */}
         <Row className="align-items-center mb-3">
           <Col>
-            <h2 className="fw-bold">Welcome, Sarah!</h2>
+            <h2 className="fw-bold">Welcome, {displayName}!</h2>
             <p className="text-muted">
               {data?.stats.completed_this_week} tasks completed this week —{" "}
               {data?.stats.pending_rewards} reward points waiting.

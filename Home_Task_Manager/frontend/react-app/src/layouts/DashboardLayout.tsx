@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { useMembers } from "../hooks/useMembers";
 
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [showSidebar, setShowSidebar] = useState(false);
   const { data: members, isLoading, error } = useMembers(1);
@@ -25,7 +26,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         >
           ☰
         </Button>
-        <div className="fw-bold">FamFlow</div>
+        <div className="fw-bold">Home Tasker</div>
         <div style={{ width: 36 }} />
       </div>
 
