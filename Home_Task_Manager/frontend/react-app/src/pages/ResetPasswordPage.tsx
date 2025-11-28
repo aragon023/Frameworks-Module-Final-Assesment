@@ -40,7 +40,7 @@ const ResetPasswordPage: React.FC = () => {
     setMessage("");
 
     try {
-      const res = await fetch(`${API_BASE}/password-reset-confirm/`, {
+      const res = await fetch(`${API_BASE}/api/password-reset-confirm/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
