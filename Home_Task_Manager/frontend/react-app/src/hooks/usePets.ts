@@ -24,21 +24,29 @@ export function usePets(householdId: number = 1) {
 export function useCreatePet() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (payload: { name: string; icon?: string | null }) => {
+  return useMutation<Pet, Error, { name: string; icon?: string | null }>({
+    mutationFn: async (payload) => {
       const res = await fetch(`${API_BASE}/api/pets/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Failed to create pet");
-      return res.json() as Promise<Pet>;
+
+      if (!res.ok) {
+        // optional: log extra info to debug 500s from the backend
+        const errorText = await res.text();
+        console.error("Create pet failed:", res.status, errorText);
+        throw new Error("Failed to create pet");
+      }
+
+      return (await res.json()) as Pet;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pets"] });
     },
   });
 }
+
 
 // UPDATE
 export function useUpdatePet() {
