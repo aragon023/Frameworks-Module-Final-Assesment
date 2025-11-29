@@ -6,16 +6,17 @@ from django.db.models import Q
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
+from rest_framework.permissions import IsAuthenticated
+
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 
+from .utils import send_password_reset_email
+
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-
-from .utils import send_password_reset_email
 
 from .models import Task, Member, Category, Pet
 from .serializers import (
@@ -27,6 +28,9 @@ from .serializers import (
     RegisterSerializer,
     CurrentUserSerializer,
 )
+
+User = get_user_model()
+password_reset_token = PasswordResetTokenGenerator()
 
 
 class DashboardView(APIView):
@@ -110,8 +114,12 @@ class MemberViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        # MVP: assign new members to household 1
-        serializer.save(household_id=1)
+        """
+        Ensure every new member is assigned to a household.
+        For MVP we always use household_id=1.
+        """
+        household_id = 1  # later this can come from the logged-in user
+        serializer.save(household_id=household_id)
 
 
 class PetViewSet(viewsets.ModelViewSet):
@@ -133,8 +141,11 @@ class PetViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        # MVP: all pets belong to household 1
-        serializer.save(household_id=1)
+        """
+        Ensure every new pet is assigned to a household.
+        """
+        household_id = 1
+        serializer.save(household_id=household_id)
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -189,6 +200,13 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         return qs
 
+    def perform_create(self, serializer):
+        """
+        Ensure every new task has a household.
+        """
+        household_id = self.request.data.get("household") or 1
+        serializer.save(household_id=household_id)
+
     def perform_update(self, serializer):
         """
         Automatically stamps completed_at when a task is marked completed.
@@ -222,10 +240,8 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         # MVP: always assign to household 1
-        serializer.save(household_id=1)
-
-
-User = get_user_model()
+        household_id = 1
+        serializer.save(household_id=household_id)
 
 
 class RegisterView(APIView):
@@ -247,64 +263,6 @@ class RegisterView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class MeView(APIView):
-    """
-    GET /api/me/      -> current user info
-    PATCH /api/me/   -> update username/email/first_name/last_name
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        serializer = CurrentUserSerializer(request.user)
-        return Response(serializer.data)
-
-    def patch(self, request):
-        serializer = CurrentUserSerializer(
-            request.user, data=request.data, partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-
-class ChangePasswordView(APIView):
-    """
-    POST /api/change-password/
-    Body: { "old_password": "...", "new_password": "..." }
-    """
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        user = request.user
-        old_password = request.data.get("old_password") or ""
-        new_password = request.data.get("new_password") or ""
-
-        if not old_password or not new_password:
-            return Response(
-                {"detail": "old_password and new_password are required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if not user.check_password(old_password):
-            return Response(
-                {"detail": "Old password is incorrect."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            validate_password(new_password, user=user)
-        except DjangoValidationError as e:
-            return Response(
-                {"detail": list(e.messages)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        user.set_password(new_password)
-        user.save()
-
-        return Response({"detail": "Password updated successfully."})
-
-
 class PasswordResetRequestView(APIView):
     """
     POST /api/password-reset/
@@ -319,15 +277,13 @@ class PasswordResetRequestView(APIView):
         if not email:
             return Response({"detail": "If this email exists, a reset link will be sent."})
 
-        User = get_user_model()
-
         try:
             user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:
             # Do NOT reveal existence of emails
             return Response({"detail": "If this email exists, a reset link will be sent."})
 
-        # Handles uid, token, reset_url, and sending the email
+        # This now handles uid, token, reset_url, and sending the email
         send_password_reset_email(user)
 
         return Response({"detail": "If this email exists, a reset link will be sent."})
@@ -350,13 +306,11 @@ class PasswordResetConfirmView(APIView):
 
         try:
             uid = force_str(urlsafe_base64_decode(uid_b64))
-            User = get_user_model()
             user = User.objects.get(pk=uid)
         except Exception:
             return Response({"detail": "Invalid token or user."}, status=status.HTTP_400_BAD_REQUEST)
 
-        token_generator = PasswordResetTokenGenerator()
-        if not token_generator.check_token(user, token):
+        if not password_reset_token.check_token(user, token):
             return Response({"detail": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
 
         if len(new_password) < 8:
@@ -366,3 +320,66 @@ class PasswordResetConfirmView(APIView):
         user.save()
 
         return Response({"detail": "Password has been reset successfully."})
+
+
+class MeView(APIView):
+    """
+    GET/PATCH /api/me/
+    - GET: return current user's profile
+    - PATCH: update username, email, first_name, last_name
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = CurrentUserSerializer(request.user)
+        return Response(serializer.data)
+
+    def patch(self, request):
+        serializer = CurrentUserSerializer(
+            request.user,
+            data=request.data,
+            partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePasswordView(APIView):
+    """
+    POST /api/change-password/
+    Body: { old_password: "...", new_password: "..." }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        old_password = request.data.get("old_password", "")
+        new_password = request.data.get("new_password", "")
+
+        if not old_password or not new_password:
+            return Response(
+                {"detail": "Both old_password and new_password are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = request.user
+        if not user.check_password(old_password):
+            return Response(
+                {"detail": "Old password is incorrect."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate new password with Django's validators
+        try:
+            validate_password(new_password, user=user)
+        except DjangoValidationError as e:
+            return Response(
+                {"detail": " ".join(e.messages)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response({"detail": "Password updated successfully."})
