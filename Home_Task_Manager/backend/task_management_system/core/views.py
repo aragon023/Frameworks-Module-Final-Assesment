@@ -18,7 +18,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Task, Member, Category, Pet
+from .models import Task, Member, Category, Pet, Household
 from .serializers import (
     TaskRowSerializer,
     MemberSerializer,
@@ -31,6 +31,18 @@ from .serializers import (
 
 User = get_user_model()
 password_reset_token = PasswordResetTokenGenerator()
+
+def get_default_household():
+    """
+    Ensure there's a default household (pk=1) and return it.
+    Adjust defaults if your Household model has extra required fields.
+    """
+    household, _ = Household.objects.get_or_create(
+        pk=1,
+        defaults={"name": "Default Household"},
+    )
+    return household
+
 
 
 class DashboardView(APIView):
@@ -114,12 +126,10 @@ class MemberViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        """
-        Ensure every new member is assigned to a household.
-        For MVP we always use household_id=1.
-        """
-        household_id = 1  # later this can come from the logged-in user
-        serializer.save(household_id=household_id)
+        # MVP: assign new members to the default household
+        household = get_default_household()
+        serializer.save(household=household)
+
 
 
 class PetViewSet(viewsets.ModelViewSet):
@@ -142,12 +152,10 @@ class PetViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """
-        Always create pets in household 1 (MVP).
-        Note: household is a ForeignKey, so we pass household_id.
+        Always create pets in the default household (pk=1).
         """
-        household_id = 1
-        serializer.save(household_id=household_id)
-
+        household = get_default_household()
+        serializer.save(household=household)
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -204,10 +212,10 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """
-        Ensure every new task has a household.
+        Ensure tasks are also created in the default household (pk=1).
         """
-        household_id = self.request.data.get("household") or 1
-        serializer.save(household_id=household_id)
+        household = get_default_household()
+        serializer.save(household=household)
 
     def perform_update(self, serializer):
         """
@@ -241,9 +249,10 @@ class CategoryViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        # MVP: always assign to household 1
-        household_id = 1
-        serializer.save(household_id=household_id)
+        # MVP: always assign to the default household
+        household = get_default_household()
+        serializer.save(household=household)
+
 
 
 class RegisterView(APIView):
