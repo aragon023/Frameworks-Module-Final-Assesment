@@ -18,9 +18,6 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from rest_framework.exceptions import APIException
-
-
 from .models import Task, Member, Category, Pet
 from .serializers import (
     TaskRowSerializer,
@@ -145,16 +142,11 @@ class PetViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """
-        TEMPORARY: wrap save in try/except so we can see the real error
-        in the JSON response instead of a blank 500.
+        Always create pets in household 1 (MVP).
+        Note: household is a ForeignKey, so we pass household_id.
         """
         household_id = 1
-        try:
-            serializer.save(household=household_id)
-        except Exception as e:
-            # DRF will return:
-            # { "detail": "Error creating pet: <actual error here>" }
-            raise APIException(f"Error creating pet: {e}")
+        serializer.save(household_id=household_id)
 
 
 
