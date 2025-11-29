@@ -14,7 +14,6 @@ def send_password_reset_email(user):
     token = token_generator.make_token(user)
     uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
 
-    # This should match your React route, e.g. /reset-password/:uid/:token
     reset_url = f"{settings.FRONTEND_BASE_URL}/reset-password/{uidb64}/{token}"
 
     subject = "Reset your password"

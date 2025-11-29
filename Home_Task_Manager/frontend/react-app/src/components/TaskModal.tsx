@@ -13,7 +13,7 @@ type TaskModalProps = {
   show: boolean;
   onHide: () => void;
   householdId?: number;
-  // for future editing; for now we’ll mostly use create mode
+  // for future editing
   initialTask?: Task | null;
 };
 
