@@ -18,7 +18,10 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insecure-key")
 DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 
 # In dev (DEBUG=True) this can stay empty; on Render we set DJANGO_ALLOWED_HOSTS
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if not DEBUG else []
+if DEBUG:
+    ALLOWED_HOSTS = ["*"]  # allow anything in debug (Render + local)
+else:
+    ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
 
 
 
