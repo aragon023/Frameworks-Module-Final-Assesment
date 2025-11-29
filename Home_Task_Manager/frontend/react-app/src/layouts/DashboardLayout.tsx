@@ -41,7 +41,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <div className="fw-bold fs-5 mb-3">HomeTasker</div>
             <div className="mb-3">
               <div className="text-muted small">Household</div>
-              <div className="fw-semibold">Aragon Family</div>
+              <div className="fw-semibold">Family</div>
             </div>
 
             <div className="d-grid gap-2 mb-3">

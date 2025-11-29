@@ -37,11 +37,19 @@ export default function App() {
  
 const API_BASE = import.meta.env.VITE_API_BASE as string;
 
-  const { userQuery } = useCurrentUser();
-  const displayName =
-    userQuery.data?.first_name?.trim() ||
-    userQuery.data?.username ||
-    "there";
+const { userQuery } = useCurrentUser();
+const user = userQuery.data;
+
+const rawName =
+  (user?.first_name && user.first_name.trim()) ||
+  (user?.username && user.username.trim()) ||
+  "";
+
+const displayName =
+  rawName.length > 0
+    ? rawName.charAt(0).toUpperCase() + rawName.slice(1)
+    : "there";
+
 
 const { data, isLoading, error } = useQuery<DashboardData>({
   queryKey: ["dashboard"],
