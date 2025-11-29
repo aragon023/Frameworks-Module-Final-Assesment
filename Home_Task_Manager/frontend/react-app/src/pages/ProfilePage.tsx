@@ -1,212 +1,273 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import type { FormEvent } from "react";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Form,
+  Button,
+  Alert,
+  Spinner,
+} from "react-bootstrap";
+import DashboardLayout from "../layouts/DashboardLayout";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 
 const ProfilePage: React.FC = () => {
   const { userQuery, updateUser, changePassword } = useCurrentUser();
+  const user = userQuery.data;
 
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [firstName, setFirstName] = useState(user?.first_name ?? "");
+  const [lastName, setLastName] = useState(user?.last_name ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
+  const [username, setUsername] = useState(user?.username ?? "");
 
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
+  // Keep local form state in sync when user data loads/refetches
   useEffect(() => {
-    if (userQuery.data) {
-      setUsername(userQuery.data.username);
-      setEmail(userQuery.data.email);
-      setFirstName(userQuery.data.first_name);
-      setLastName(userQuery.data.last_name);
+    if (user) {
+      setFirstName(user.first_name ?? "");
+      setLastName(user.last_name ?? "");
+      setEmail(user.email ?? "");
+      setUsername(user.username ?? "");
     }
-  }, [userQuery.data]);
+  }, [user]);
 
-  const handleProfileSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleProfileSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!user) return;
+
     setProfileMessage(null);
+    setProfileError(null);
 
     updateUser.mutate(
       {
-        username,
-        email,
         first_name: firstName,
         last_name: lastName,
+        email,
+        username,
       },
       {
         onSuccess: () => {
           setProfileMessage("Profile updated successfully.");
         },
         onError: (err) => {
-          setProfileMessage(err.message || "Failed to update profile.");
+          setProfileError(err.message || "Failed to update profile.");
         },
       }
     );
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handlePasswordSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setPasswordMessage(null);
+    setPasswordError(null);
+
+    if (!oldPassword || !newPassword) {
+      setPasswordError("Please fill in both password fields.");
+      return;
+    }
 
     changePassword.mutate(
       { old_password: oldPassword, new_password: newPassword },
       {
         onSuccess: (data) => {
-          setPasswordMessage(data.detail || "Password updated successfully.");
+          setPasswordMessage(data.detail || "Password changed successfully.");
           setOldPassword("");
           setNewPassword("");
         },
         onError: (err) => {
-          setPasswordMessage(err.message || "Failed to change password.");
+          setPasswordError(err.message || "Failed to change password.");
         },
       }
     );
   };
 
   if (userQuery.isLoading) {
-    return <div className="container py-4">Loading profile...</div>;
-  }
-
-  if (userQuery.isError) {
     return (
-      <div className="container py-4">
-        <div className="alert alert-danger">
-          Failed to load profile. Please try again.
+      <DashboardLayout>
+        <div className="d-flex justify-content-center align-items-center py-5">
+          <Spinner animation="border" />
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
+  if (userQuery.isError || !user) {
+    return (
+      <DashboardLayout>
+        <Container className="py-4">
+          <Alert variant="danger">
+            Failed to load profile. Please try refreshing the page or logging in
+            again.
+          </Alert>
+        </Container>
+      </DashboardLayout>
+    );
+  }
+
+  const rawName =
+    (user.first_name && user.first_name.trim()) ||
+    (user.username && user.username.trim()) ||
+    "";
+  const displayName =
+    rawName.length > 0
+      ? rawName.charAt(0).toUpperCase() + rawName.slice(1)
+      : "there";
+
   return (
-    <div className="container py-4">
-      <h1 className="h4 mb-4">My Profile</h1>
+    <DashboardLayout>
+      <Container className="py-4">
+        <Row className="mb-3">
+          <Col>
+            <h2 className="fw-bold mb-1">Profile</h2>
+            <p className="text-muted mb-0">
+              Manage your account details and update your password.
+            </p>
+          </Col>
+        </Row>
 
-      {/* Profile info */}
-      <div className="card mb-4">
-        <div className="card-body">
-          <h2 className="h6 mb-3">Account details</h2>
+        <Row className="g-4">
+          {/* Profile details */}
+          <Col md={6}>
+            <Card className="shadow-sm">
+              <Card.Body>
+                <Card.Title className="fw-semibold mb-3">
+                  Welcome, {displayName}
+                </Card.Title>
 
-          {profileMessage && (
-            <div className="alert alert-info py-2 small">
-              {profileMessage}
-            </div>
-          )}
+                <Form onSubmit={handleProfileSubmit}>
+                  <Form.Group className="mb-3" controlId="profileFirstName">
+                    <Form.Label>First name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="e.g. James"
+                    />
+                  </Form.Group>
 
-          <form onSubmit={handleProfileSubmit}>
-            <div className="mb-3">
-              <label className="form-label" htmlFor="username">
-                Username
-              </label>
-              <input
-                id="username"
-                className="form-control"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
+                  <Form.Group className="mb-3" controlId="profileLastName">
+                    <Form.Label>Last name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="e.g. Smith"
+                    />
+                  </Form.Group>
 
-            <div className="mb-3">
-              <label className="form-label" htmlFor="email">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                className="form-control"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
+                  <Form.Group className="mb-3" controlId="profileEmail">
+                    <Form.Label>Email</Form.Label>
+                    <Form.Control
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                    />
+                  </Form.Group>
 
-            <div className="row">
-              <div className="col-md-6 mb-3">
-                <label className="form-label" htmlFor="firstName">
-                  First name
-                </label>
-                <input
-                  id="firstName"
-                  className="form-control"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                />
-              </div>
-              <div className="col-md-6 mb-3">
-                <label className="form-label" htmlFor="lastName">
-                  Last name
-                </label>
-                <input
-                  id="lastName"
-                  className="form-control"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                />
-              </div>
-            </div>
+                  <Form.Group className="mb-3" controlId="profileUsername">
+                    <Form.Label>Username</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Your username"
+                    />
+                  </Form.Group>
 
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={updateUser.isPending}
-            >
-              {updateUser.isPending ? "Saving..." : "Save changes"}
-            </button>
-          </form>
-        </div>
-      </div>
+                  {profileError && (
+                    <Alert variant="danger" className="mt-2">
+                      {profileError}
+                    </Alert>
+                  )}
+                  {profileMessage && (
+                    <Alert variant="success" className="mt-2">
+                      {profileMessage}
+                    </Alert>
+                  )}
 
-      {/* Change password */}
-      <div className="card">
-        <div className="card-body">
-          <h2 className="h6 mb-3">Change password</h2>
+                  <div className="d-flex justify-content-end mt-3">
+                    <Button
+                      type="submit"
+                      variant="success" 
+                      disabled={updateUser.isPending}
+                    >
+                      {updateUser.isPending ? "Saving..." : "Save changes"}
+                    </Button>
+                  </div>
+                </Form>
+              </Card.Body>
+            </Card>
+          </Col>
 
-          {passwordMessage && (
-            <div className="alert alert-info py-2 small">
-              {passwordMessage}
-            </div>
-          )}
+          {/* Password change */}
+          <Col md={6}>
+            <Card className="shadow-sm">
+              <Card.Body>
+                <Card.Title className="fw-semibold mb-3">
+                  Change password
+                </Card.Title>
 
-          <form onSubmit={handlePasswordSubmit}>
-            <div className="mb-3">
-              <label className="form-label" htmlFor="oldPassword">
-                Current password
-              </label>
-              <input
-                id="oldPassword"
-                type="password"
-                className="form-control"
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                required
-              />
-            </div>
+                <Form onSubmit={handlePasswordSubmit}>
+                  <Form.Group className="mb-3" controlId="oldPassword">
+                    <Form.Label>Current password</Form.Label>
+                    <Form.Control
+                      type="password"
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      placeholder="Enter current password"
+                      required
+                    />
+                  </Form.Group>
 
-            <div className="mb-3">
-              <label className="form-label" htmlFor="newPassword">
-                New password
-              </label>
-              <input
-                id="newPassword"
-                type="password"
-                className="form-control"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-              />
-            </div>
+                  <Form.Group className="mb-3" controlId="newPassword">
+                    <Form.Label>New password</Form.Label>
+                    <Form.Control
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="At least 8 characters"
+                      required
+                    />
+                  </Form.Group>
 
-            <button
-              type="submit"
-              className="btn btn-outline-primary"
-              disabled={changePassword.isPending}
-            >
-              {changePassword.isPending ? "Updating..." : "Update password"}
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
+                  {passwordError && (
+                    <Alert variant="danger" className="mt-2">
+                      {passwordError}
+                    </Alert>
+                  )}
+                  {passwordMessage && (
+                    <Alert variant="success" className="mt-2">
+                      {passwordMessage}
+                    </Alert>
+                  )}
+
+                  <div className="d-flex justify-content-end mt-3">
+                    <Button
+                      type="submit"
+                      variant="success" 
+                      disabled={changePassword.isPending}
+                    >
+                      {changePassword.isPending ? "Updating..." : "Update password"}
+                    </Button>
+                  </div>
+                </Form>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
+    </DashboardLayout>
   );
 };
 

@@ -74,6 +74,8 @@ export default function Sidebar({ show, onHide, householdId = 1 }: SidebarProps)
           <Nav.Link className="btn btn-light text-start">
             📅 Calendar
           </Nav.Link>
+
+          {/* Future features (not wired yet) */}
           <Nav.Link className="btn btn-light text-start">
             ⭐ Rewards
           </Nav.Link>
@@ -87,7 +89,7 @@ export default function Sidebar({ show, onHide, householdId = 1 }: SidebarProps)
             👤 Profile
           </Nav.Link>
 
-          {/* Later you can point this to /settings if you create that page */}
+          {/* Future features (not available yet) */}
           <Nav.Link className="btn btn-light text-start">
             ⚙️ Settings
           </Nav.Link>
