@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Task, Member, Category, Pet
+from core.models import Household
+
 
 User = get_user_model()
 
@@ -98,14 +100,42 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         password = validated_data.pop("password")
-        user = User(**validated_data)
+
+        # 1. Create household
+        household = Household.objects.create(
+            name=f"{validated_data.get('username')}'s Household"
+        )
+
+        # 2. Create user and assign household
+        user = User(
+            **validated_data,
+            household=household
+        )
         user.set_password(password)
         user.save()
+
         return user
 
 
 class CurrentUserSerializer(serializers.ModelSerializer):
+    household = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ["id", "username", "email", "first_name", "last_name"]
+        fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "household",
+        ]
         read_only_fields = ["id"]
+
+    def get_household(self, obj):
+        if obj.household:
+            return {
+                "id": obj.household.id,
+                "name": obj.household.name,
+            }
+        return None
