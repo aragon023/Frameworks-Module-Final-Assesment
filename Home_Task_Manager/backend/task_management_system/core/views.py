@@ -231,27 +231,21 @@ class TaskViewSet(viewsets.ModelViewSet):
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """
-    Simple CRUD for categories.
-    Currently assigns all new categories to household 1 by default.
+    CRUD for categories.
+    Categories are always scoped to the authenticated user's household.
     """
-    queryset = Category.objects.all().order_by("name")
     serializer_class = CategorySerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        household = self.request.query_params.get("household")
-        if household:
-            qs = qs.filter(household_id=household)
-        else:
-            # For now default to household 1 in lists too (MVP)
-            qs = qs.filter(household_id=1)
-        return qs
+        return Category.objects.filter(
+            household=self.request.user.household
+        ).order_by("name")
 
     def perform_create(self, serializer):
-        # MVP: always assign to the default household
-        household = get_default_household()
-        serializer.save(household=household)
-
+        serializer.save(
+            household=self.request.user.household
+        )
 
 
 class RegisterView(APIView):
