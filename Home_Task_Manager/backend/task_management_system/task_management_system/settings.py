@@ -28,6 +28,7 @@ else:
 # Application definition
 
 INSTALLED_APPS = [
+    'users',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,6 +40,8 @@ INSTALLED_APPS = [
     'core',
     "anymail"
 ]
+
+AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',    
@@ -84,7 +87,9 @@ DATABASES = {
 
 # If DATABASE_URL is set (e.g. on Render), use Postgres instead
 DATABASE_URL = os.environ.get("DATABASE_URL")
-if DATABASE_URL:
+
+# TEMPORARY: only use DATABASE_URL when DEBUG is False (e.g. on Render)
+if DATABASE_URL and not DEBUG:
     DATABASES["default"] = dj_database_url.parse(
         DATABASE_URL,
         conn_max_age=600,
