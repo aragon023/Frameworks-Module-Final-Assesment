@@ -163,23 +163,24 @@ class TaskViewSet(viewsets.ModelViewSet):
     CRUD API for tasks.
 
     Supports filters via query parameters:
-      - household: household id
       - search: text in title/description
       - category: category id
       - assignee_member: member id
       - assignee_pet: pet id
       - completed: true/false/1/0
+
+    Household is ALWAYS inferred from the authenticated user.
     """
-    queryset = Task.objects.all().order_by("-created_at")
     serializer_class = TaskSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        p = self.request.query_params
+        # 🔐 Always scope to user's household
+        qs = Task.objects.filter(
+            household=self.request.user.household
+        ).order_by("-created_at")
 
-        household = p.get("household")
-        if household:
-            qs = qs.filter(household_id=household)
+        p = self.request.query_params
 
         search = p.get("search")
         if search:
@@ -211,11 +212,10 @@ class TaskViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        """
-        Ensure tasks are also created in the default household (pk=1).
-        """
-        household = get_default_household()
-        serializer.save(household=household)
+        # 🔐 Always assign task to user's household
+        serializer.save(
+            household=self.request.user.household
+        )
 
     def perform_update(self, serializer):
         """
@@ -223,10 +223,9 @@ class TaskViewSet(viewsets.ModelViewSet):
         """
         was_completed = serializer.instance.completed
         obj = serializer.save()
-        from django.utils import timezone as _tz  # local alias to avoid shadowing
 
         if not was_completed and obj.completed and obj.completed_at is None:
-            obj.completed_at = _tz.now()
+            obj.completed_at = timezone.now()
             obj.save(update_fields=["completed_at"])
 
 
