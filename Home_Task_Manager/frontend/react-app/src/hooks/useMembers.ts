@@ -9,18 +9,17 @@ export type Member = {
 };
 
 // READ: list members for a household (used by sidebar, filters, etc.)
-export function useMembers(householdId: number = 1) {
+export function useMembers() {
   return useQuery<Member[]>({
-    queryKey: ["members", householdId],
+    queryKey: ["members"],
     queryFn: async () => {
-      const res = await fetch(
-        `${API_BASE}/api/members/?household=${householdId}`
-      );
+      const res = await fetch(`${API_BASE}/members/`);
       if (!res.ok) throw new Error("Failed to load members");
       return res.json();
     },
   });
 }
+
 
 // CREATE (for Members management page)
 export function useCreateMember() {
@@ -28,7 +27,7 @@ export function useCreateMember() {
 
   return useMutation({
     mutationFn: async (payload: { name: string; avatar_url?: string | null }) => {
-      const res = await fetch(`${API_BASE}/api/member-items/`, {
+      const res = await fetch(`${API_BASE}/member-items/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -48,7 +47,7 @@ export function useUpdateMember() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<Member> }) => {
-      const res = await fetch(`${API_BASE}/api/member-items/${id}/`, {
+      const res = await fetch(`${API_BASE}/member-items/${id}/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -68,7 +67,7 @@ export function useDeleteMember() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const res = await fetch(`${API_BASE}/api/member-items/${id}/`, {
+      const res = await fetch(`${API_BASE}/member-items/${id}/`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete member");

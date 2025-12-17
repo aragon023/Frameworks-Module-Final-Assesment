@@ -6,14 +6,9 @@ import type { Task, TaskPayload } from "../hooks/useTasks";
 import { useCategories } from "../hooks/useCategories";
 import { usePets } from "../hooks/usePets";
 
-
-
-
 type TaskModalProps = {
   show: boolean;
   onHide: () => void;
-  householdId?: number;
-  // for future editing
   initialTask?: Task | null;
 };
 
@@ -32,7 +27,6 @@ function toDateTimeLocal(value: string | null): string {
 export default function TaskModal({
   show,
   onHide,
-  householdId = 1,
   initialTask = null,
 }: TaskModalProps) {
   const isEdit = !!initialTask;
@@ -42,41 +36,44 @@ export default function TaskModal({
   const [priority, setPriority] = useState<"low" | "med" | "high">("low");
   const [dueDate, setDueDate] = useState<string>("");
   const [assigneeMemberId, setAssigneeMemberId] = useState<string>("");
-  const [formError, setFormError] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState<string>("");
   const [petId, setPetId] = useState<string>("");
+  const [formError, setFormError] = useState<string | null>(null);
 
-
-  const { data: members, isLoading: membersLoading } = useMembers(householdId);
+  const { data: members, isLoading: membersLoading } = useMembers();
   const { data: categories, isLoading: categoriesLoading } = useCategories();
-  const { data: pets, isLoading: petsLoading } = usePets(householdId);
+  const { data: pets, isLoading: petsLoading } = usePets();
 
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
 
-  // Reset form whenever modal opens or initialTask changes
- useEffect(() => {
-  if (initialTask) {
-    setTitle(initialTask.title);
-    setDescription(initialTask.description || "");
-    setPriority(initialTask.priority);
-    setDueDate(toDateTimeLocal(initialTask.due_date));
-    setAssigneeMemberId(
-      initialTask.assignee_member ? String(initialTask.assignee_member) : ""
-    );
-    setCategoryId(initialTask.category ? String(initialTask.category) : "");
-    setPetId(initialTask.assignee_pet ? String(initialTask.assignee_pet) : "");
-  } else {
-    setTitle("");
-    setDescription("");
-    setPriority("low");
-    setDueDate("");
-    setAssigneeMemberId("");
-    setCategoryId("");
-    setPetId("");
-  }
-  setFormError(null);
-}, [initialTask, show]);
+  // Reset form whenever modal opens or task changes
+  useEffect(() => {
+    if (initialTask) {
+      setTitle(initialTask.title);
+      setDescription(initialTask.description || "");
+      setPriority(initialTask.priority);
+      setDueDate(toDateTimeLocal(initialTask.due_date));
+      setAssigneeMemberId(
+        initialTask.assignee_member ? String(initialTask.assignee_member) : ""
+      );
+      setCategoryId(
+        initialTask.category ? String(initialTask.category) : ""
+      );
+      setPetId(
+        initialTask.assignee_pet ? String(initialTask.assignee_pet) : ""
+      );
+    } else {
+      setTitle("");
+      setDescription("");
+      setPriority("low");
+      setDueDate("");
+      setAssigneeMemberId("");
+      setCategoryId("");
+      setPetId("");
+    }
+    setFormError(null);
+  }, [initialTask, show]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,27 +84,27 @@ export default function TaskModal({
       return;
     }
 
-  const payload: TaskPayload = {
-    household: householdId,
-    title: title.trim(),
-    description: description.trim() || "",
-    priority,
-    due_date: dueDate ? new Date(dueDate).toISOString() : null,
-    assignee_member: assigneeMemberId ? Number(assigneeMemberId) : null,
-    assignee_pet: petId ? Number(petId) : null,
-    category: categoryId ? Number(categoryId) : null,
-  };
-
-
+    const payload: TaskPayload = {
+      title: title.trim(),
+      description: description.trim() || "",
+      priority,
+      due_date: dueDate ? new Date(dueDate).toISOString() : null,
+      assignee_member: assigneeMemberId ? Number(assigneeMemberId) : null,
+      assignee_pet: petId ? Number(petId) : null,
+      category: categoryId ? Number(categoryId) : null,
+    };
 
     try {
       if (isEdit && initialTask) {
-        await updateTask.mutateAsync({ id: initialTask.id, data: payload });
+        await updateTask.mutateAsync({
+          id: initialTask.id,
+          data: payload,
+        });
       } else {
         await createTask.mutateAsync(payload);
       }
       onHide();
-    } catch (err) {
+    } catch {
       setFormError("Something went wrong saving the task. Please try again.");
     }
   };
@@ -120,13 +117,13 @@ export default function TaskModal({
         <Modal.Header closeButton>
           <Modal.Title>{isEdit ? "Edit Task" : "Add New Task"}</Modal.Title>
         </Modal.Header>
+
         <Modal.Body>
           {formError && <Alert variant="danger">{formError}</Alert>}
 
-          <Form.Group className="mb-3" controlId="taskTitle">
+          <Form.Group className="mb-3">
             <Form.Label>Title</Form.Label>
             <Form.Control
-              type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Vacuum living room"
@@ -134,20 +131,19 @@ export default function TaskModal({
             />
           </Form.Group>
 
-          <Form.Group className="mb-3" controlId="taskDescription">
+          <Form.Group className="mb-3">
             <Form.Label>Description</Form.Label>
             <Form.Control
               as="textarea"
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional details..."
             />
           </Form.Group>
 
           <Row className="mb-3">
             <Col md={6}>
-              <Form.Group controlId="taskDueDate">
+              <Form.Group>
                 <Form.Label>Due date & time</Form.Label>
                 <Form.Control
                   type="datetime-local"
@@ -157,11 +153,13 @@ export default function TaskModal({
               </Form.Group>
             </Col>
             <Col md={6}>
-              <Form.Group controlId="taskPriority">
+              <Form.Group>
                 <Form.Label>Priority</Form.Label>
                 <Form.Select
                   value={priority}
-                  onChange={(e) => setPriority(e.target.value as "low" | "med" | "high")}
+                  onChange={(e) =>
+                    setPriority(e.target.value as "low" | "med" | "high")
+                  }
                 >
                   <option value="low">Low</option>
                   <option value="med">Medium</option>
@@ -171,12 +169,10 @@ export default function TaskModal({
             </Col>
           </Row>
 
-          <Form.Group className="mb-3" controlId="taskCategory">
+          <Form.Group className="mb-3">
             <Form.Label>Category</Form.Label>
             {categoriesLoading ? (
-              <div className="d-flex align-items-center gap-2">
-                <Spinner animation="border" size="sm" /> <span>Loading categories…</span>
-              </div>
+              <Spinner size="sm" />
             ) : (
               <Form.Select
                 value={categoryId}
@@ -192,12 +188,10 @@ export default function TaskModal({
             )}
           </Form.Group>
 
-          <Form.Group className="mb-3" controlId="taskPet">
+          <Form.Group className="mb-3">
             <Form.Label>Related pet</Form.Label>
             {petsLoading ? (
-              <div className="d-flex align-items-center gap-2">
-                <Spinner animation="border" size="sm" /> <span>Loading pets…</span>
-              </div>
+              <Spinner size="sm" />
             ) : (
               <Form.Select
                 value={petId}
@@ -213,14 +207,10 @@ export default function TaskModal({
             )}
           </Form.Group>
 
-
-
-          <Form.Group className="mb-3" controlId="taskAssignee">
+          <Form.Group className="mb-3">
             <Form.Label>Assign to</Form.Label>
             {membersLoading ? (
-              <div className="d-flex align-items-center gap-2">
-                <Spinner animation="border" size="sm" /> <span>Loading members…</span>
-              </div>
+              <Spinner size="sm" />
             ) : (
               <Form.Select
                 value={assigneeMemberId}
@@ -236,18 +226,13 @@ export default function TaskModal({
             )}
           </Form.Group>
         </Modal.Body>
+
         <Modal.Footer>
           <Button variant="outline-secondary" onClick={onHide} disabled={isSaving}>
             Cancel
           </Button>
           <Button type="submit" variant="success" disabled={isSaving}>
-            {isSaving ? (
-              <>
-                <Spinner animation="border" size="sm" className="me-2" /> Saving...
-              </>
-            ) : (
-              isEdit ? "Save changes" : "Create task"
-            )}
+            {isSaving ? "Saving…" : isEdit ? "Save changes" : "Create task"}
           </Button>
         </Modal.Footer>
       </Form>

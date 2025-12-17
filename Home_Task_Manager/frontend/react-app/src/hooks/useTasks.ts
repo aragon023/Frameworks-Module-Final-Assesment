@@ -5,7 +5,6 @@ const API_BASE = import.meta.env.VITE_API_BASE as string;
 // Shape of a Task as returned by the API
 export type Task = {
   id: number;
-  household: number;
   title: string;
   description: string;
   category: number | null;
@@ -21,7 +20,6 @@ export type Task = {
 
 // Payload for creating/updating a task
 export type TaskPayload = {
-  household: number;
   title: string;
   description?: string;
   category?: number | null;
@@ -33,7 +31,6 @@ export type TaskPayload = {
 };
 
 type TaskFilters = {
-  householdId?: number;
   search?: string;
   category?: number;
   assignee_member?: number;
@@ -46,7 +43,6 @@ type TaskFilters = {
 // Helper: build query string from filters
 function buildQuery(filters: TaskFilters = {}): string {
   const params = new URLSearchParams();
-  if (filters.householdId != null) params.set("household", String(filters.householdId));
   if (filters.search) params.set("search", filters.search);
   if (filters.category != null) params.set("category", String(filters.category));
   if (filters.assignee_member != null) params.set("assignee_member", String(filters.assignee_member));
@@ -59,19 +55,18 @@ function buildQuery(filters: TaskFilters = {}): string {
 }
 
 // READ: list tasks with optional filters
-export function useTasks(filters: TaskFilters = { householdId: 1 }) {
-  const { householdId = 1, ...rest } = filters;
-
+export function useTasks(filters: TaskFilters = {}) {
   return useQuery<Task[]>({
-    queryKey: ["tasks", { householdId, ...rest }],
+    queryKey: ["tasks", filters],
     queryFn: async () => {
-      const query = buildQuery({ householdId, ...rest });
-      const res = await fetch(`${API_BASE}/api/tasks/${query}`);
+      const query = buildQuery(filters);
+      const res = await fetch(`${API_BASE}/tasks/${query}`);
       if (!res.ok) throw new Error("Failed to load tasks");
       return res.json();
     },
   });
 }
+
 
 // CREATE
 export function useCreateTask() {
@@ -79,7 +74,7 @@ export function useCreateTask() {
 
   return useMutation({
     mutationFn: async (payload: TaskPayload) => {
-      const res = await fetch(`${API_BASE}/api/tasks/`, {
+      const res = await fetch(`${API_BASE}/tasks/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -100,7 +95,7 @@ export function useUpdateTask() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<TaskPayload> }) => {
-      const res = await fetch(`${API_BASE}/api/tasks/${id}/`, {
+      const res = await fetch(`${API_BASE}/tasks/${id}/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -121,7 +116,7 @@ export function useDeleteTask() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const res = await fetch(`${API_BASE}/api/tasks/${id}/`, {
+      const res = await fetch(`${API_BASE}/tasks/${id}/`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete task");

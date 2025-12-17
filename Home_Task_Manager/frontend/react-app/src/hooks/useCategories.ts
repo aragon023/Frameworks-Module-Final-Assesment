@@ -12,7 +12,7 @@ export function useCategories() {
   return useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/api/categories/`);
+      const res = await fetch(`${API_BASE}/categories/`);
       if (!res.ok) throw new Error("Failed to load categories");
       return res.json();
     },
@@ -25,7 +25,7 @@ export function useCreateCategory() {
 
   return useMutation({
     mutationFn: async (name: string) => {
-      const res = await fetch(`${API_BASE}/api/categories/`, {
+      const res = await fetch(`${API_BASE}/categories/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
@@ -45,7 +45,7 @@ export function useUpdateCategory() {
 
   return useMutation({
     mutationFn: async ({ id, name }: { id: number; name: string }) => {
-      const res = await fetch(`${API_BASE}/api/categories/${id}/`, {
+      const res = await fetch(`${API_BASE}/categories/${id}/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
@@ -65,7 +65,7 @@ export function useDeleteCategory() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const res = await fetch(`${API_BASE}/api/categories/${id}/`, {
+      const res = await fetch(`${API_BASE}/categories/${id}/`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete category");

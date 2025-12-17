@@ -9,11 +9,11 @@ export type Pet = {
 };
 
 // READ
-export function usePets(householdId: number = 1) {
+export function usePets() {
   return useQuery<Pet[]>({
-    queryKey: ["pets", householdId],
+    queryKey: ["pets"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/api/pets/?household=${householdId}`);
+      const res = await fetch(`${API_BASE}/pets/`);
       if (!res.ok) throw new Error("Failed to load pets");
       return res.json();
     },
@@ -26,7 +26,7 @@ export function useCreatePet() {
 
   return useMutation<Pet, Error, { name: string; icon?: string | null }>({
     mutationFn: async (payload) => {
-      const res = await fetch(`${API_BASE}/api/pets/`, {
+      const res = await fetch(`${API_BASE}/pets/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -54,7 +54,7 @@ export function useUpdatePet() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<Pet> }) => {
-      const res = await fetch(`${API_BASE}/api/pets/${id}/`, {
+      const res = await fetch(`${API_BASE}/pets/${id}/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -74,7 +74,7 @@ export function useDeletePet() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const res = await fetch(`${API_BASE}/api/pets/${id}/`, {
+      const res = await fetch(`${API_BASE}/pets/${id}/`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete pet");
