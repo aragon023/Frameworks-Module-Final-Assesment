@@ -33,8 +33,8 @@ export default function LoginPage() {
       const data = await res.json();
 
       // Store tokens in localStorage for now
-      localStorage.setItem("accessToken", data.access);
-      localStorage.setItem("refreshToken", data.refresh);
+      localStorage.setItem("access", data.access);
+      localStorage.setItem("refresh", data.refresh);
 
       setLoading(false);
 

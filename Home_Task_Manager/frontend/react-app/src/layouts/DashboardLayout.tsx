@@ -4,15 +4,14 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { useMembers } from "../hooks/useMembers";
 
-
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [showSidebar, setShowSidebar] = useState(false);
-  const { data: members, isLoading, error } = useMembers(1);
+  const { data: members, isLoading, error } = useMembers(); // ✅ no householdId
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
     navigate("/login");
   };
 
@@ -26,7 +25,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         >
           ☰
         </Button>
-        <div className="fw-bold">Home Tasker</div>
+        <div className="fw-bold">HomeTasker</div>
         <div style={{ width: 36 }} />
       </div>
 
@@ -39,71 +38,31 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             className="d-none d-md-block border-end bg-white min-vh-100 p-3"
           >
             <div className="fw-bold fs-5 mb-3">HomeTasker</div>
-            <div className="mb-3">
-              <div className="text-muted small">Household</div>
-              <div className="fw-semibold">Family</div>
-            </div>
 
             <div className="d-grid gap-2 mb-3">
-              <Button
-                variant="light"
-                className="text-start"
-                onClick={() => navigate("/")}
-              >
+              <Button variant="light" className="text-start" onClick={() => navigate("/")}>
                 🏠 Dashboard
               </Button>
-              <Button
-                variant="light"
-                className="text-start"
-                onClick={() => navigate("/tasks")}
-              >
+              <Button variant="light" className="text-start" onClick={() => navigate("/tasks")}>
                 📋 Tasks
               </Button>
-              <Button
-                variant="light"
-                className="text-start"
-                onClick={() => navigate("/categories")}
-              >
+              <Button variant="light" className="text-start" onClick={() => navigate("/categories")}>
                 🗂️ Categories
               </Button>
-              <Button
-                variant="light"
-                className="text-start"
-                onClick={() => navigate("/members")}
-              >
+              <Button variant="light" className="text-start" onClick={() => navigate("/members")}>
                 👨‍👩‍👧 Family
               </Button>
-              <Button
-                variant="light"
-                className="text-start"
-                onClick={() => navigate("/pets")}
-              >
+              <Button variant="light" className="text-start" onClick={() => navigate("/pets")}>
                 🐾 Pets
               </Button>
 
-              {/* Future features */}
-              <Button variant="light" className="text-start">
-                📅 Calendar
-              </Button>
-              <Button variant="light" className="text-start">
-                ⭐ Rewards
-              </Button>
-
-              {/* Profile */}
-              <Button
-                variant="light"
-                className="text-start"
-                onClick={() => navigate("/profile")}
-              >
+              <Button variant="light" className="text-start" onClick={() => navigate("/profile")}>
                 👤 Profile
-              </Button>
-
-              <Button variant="light" className="text-start">
-                ⚙️ Settings
               </Button>
             </div>
 
-            <div className="text-muted small mb-2">Family</div>
+            <div className="text-muted small mb-2">Family members</div>
+
             {isLoading ? (
               <div className="py-2 text-center">
                 <Spinner animation="border" size="sm" />
@@ -115,10 +74,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             ) : (
               <div className="d-grid gap-2">
                 {(members ?? []).map((m) => (
-                  <div
-                    key={m.id}
-                    className="d-flex align-items-center gap-2"
-                  >
+                  <div key={m.id} className="d-flex align-items-center gap-2">
                     {m.avatar_url ? (
                       <img
                         src={m.avatar_url}
@@ -145,20 +101,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 )}
               </div>
             )}
-
-            <Button variant="success" className="w-100 mt-3">
-              Invite Member
-            </Button>
           </Col>
 
           {/* Main content */}
           <Col xs={12} md={9} lg={10} className="p-3">
             <div className="d-flex justify-content-end mb-3">
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={handleLogout}
-              >
+              <Button variant="outline-secondary" size="sm" onClick={handleLogout}>
                 Log out
               </Button>
             </div>
@@ -167,12 +115,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </Row>
       </Container>
 
-      {/* Mobile Offcanvas */}
-      <Sidebar
-        show={showSidebar}
-        onHide={() => setShowSidebar(false)}
-        householdId={1}
-      />
+      {/* Mobile sidebar */}
+      <Sidebar show={showSidebar} onHide={() => setShowSidebar(false)} />
     </div>
   );
 }
