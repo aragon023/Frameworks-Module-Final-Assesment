@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getAuthHeaders } from "../api/auth";
 
 const API_BASE = import.meta.env.VITE_API_BASE as string;
 
@@ -8,20 +9,24 @@ export type Member = {
   avatar_url?: string | null;
 };
 
-// READ: list members for a household (used by sidebar, filters, etc.)
+// READ
 export function useMembers() {
   return useQuery<Member[]>({
     queryKey: ["members"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/members/`);
+      const res = await fetch(`${API_BASE}/members/`, {
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+      });
       if (!res.ok) throw new Error("Failed to load members");
       return res.json();
     },
   });
 }
 
-
-// CREATE (for Members management page)
+// CREATE
 export function useCreateMember() {
   const queryClient = useQueryClient();
 
@@ -29,7 +34,10 @@ export function useCreateMember() {
     mutationFn: async (payload: { name: string; avatar_url?: string | null }) => {
       const res = await fetch(`${API_BASE}/member-items/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to create member");
@@ -49,7 +57,10 @@ export function useUpdateMember() {
     mutationFn: async ({ id, data }: { id: number; data: Partial<Member> }) => {
       const res = await fetch(`${API_BASE}/member-items/${id}/`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("Failed to update member");
@@ -69,6 +80,7 @@ export function useDeleteMember() {
     mutationFn: async (id: number) => {
       const res = await fetch(`${API_BASE}/member-items/${id}/`, {
         method: "DELETE",
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error("Failed to delete member");
       return true;

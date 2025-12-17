@@ -19,7 +19,7 @@ import {
 import type { Member } from "../hooks/useMembers";
 
 export default function MembersPage() {
-  const { data, isLoading, error } = useMembers(1);
+  const { data, isLoading, error } = useMembers();
   const createMember = useCreateMember();
   const updateMember = useUpdateMember();
   const deleteMember = useDeleteMember();

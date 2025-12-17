@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getAuthHeaders } from "../api/auth";
 
 const API_BASE = import.meta.env.VITE_API_BASE as string;
 
-// Shape of a Task as returned by the API
 export type Task = {
   id: number;
   title: string;
@@ -18,7 +18,6 @@ export type Task = {
   updated_at: string;
 };
 
-// Payload for creating/updating a task
 export type TaskPayload = {
   title: string;
   description?: string;
@@ -39,34 +38,39 @@ type TaskFilters = {
   priority?: "low" | "med" | "high";
 };
 
-
-// Helper: build query string from filters
 function buildQuery(filters: TaskFilters = {}): string {
   const params = new URLSearchParams();
   if (filters.search) params.set("search", filters.search);
   if (filters.category != null) params.set("category", String(filters.category));
-  if (filters.assignee_member != null) params.set("assignee_member", String(filters.assignee_member));
-  if (filters.assignee_pet != null) params.set("assignee_pet", String(filters.assignee_pet));
-  if (filters.completed != null) params.set("completed", filters.completed ? "true" : "false");
+  if (filters.assignee_member != null)
+    params.set("assignee_member", String(filters.assignee_member));
+  if (filters.assignee_pet != null)
+    params.set("assignee_pet", String(filters.assignee_pet));
+  if (filters.completed != null)
+    params.set("completed", filters.completed ? "true" : "false");
   if (filters.priority) params.set("priority", filters.priority);
 
   const qs = params.toString();
   return qs ? `?${qs}` : "";
 }
 
-// READ: list tasks with optional filters
+// READ
 export function useTasks(filters: TaskFilters = {}) {
   return useQuery<Task[]>({
     queryKey: ["tasks", filters],
     queryFn: async () => {
       const query = buildQuery(filters);
-      const res = await fetch(`${API_BASE}/tasks/${query}`);
+      const res = await fetch(`${API_BASE}/tasks/${query}`, {
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+      });
       if (!res.ok) throw new Error("Failed to load tasks");
       return res.json();
     },
   });
 }
-
 
 // CREATE
 export function useCreateTask() {
@@ -76,7 +80,10 @@ export function useCreateTask() {
     mutationFn: async (payload: TaskPayload) => {
       const res = await fetch(`${API_BASE}/tasks/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to create task");
@@ -89,7 +96,7 @@ export function useCreateTask() {
   });
 }
 
-// UPDATE (partial)
+// UPDATE
 export function useUpdateTask() {
   const queryClient = useQueryClient();
 
@@ -97,7 +104,10 @@ export function useUpdateTask() {
     mutationFn: async ({ id, data }: { id: number; data: Partial<TaskPayload> }) => {
       const res = await fetch(`${API_BASE}/tasks/${id}/`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("Failed to update task");
@@ -118,6 +128,7 @@ export function useDeleteTask() {
     mutationFn: async (id: number) => {
       const res = await fetch(`${API_BASE}/tasks/${id}/`, {
         method: "DELETE",
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error("Failed to delete task");
       return true;
