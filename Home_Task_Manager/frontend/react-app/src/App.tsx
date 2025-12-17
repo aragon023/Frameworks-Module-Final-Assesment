@@ -54,7 +54,12 @@ const displayName =
 const { data, isLoading, error } = useQuery<DashboardData>({
   queryKey: ["dashboard"],
   queryFn: async () => {
-    const res = await fetch(`${API_BASE}/api/dashboard/?household=1`);
+    const res = await fetch(`${API_BASE}/dashboard/`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access")}`,
+      },
+    });
+
     if (!res.ok) throw new Error("Network response was not ok");
     return res.json();
   },
@@ -189,12 +194,12 @@ const { data, isLoading, error } = useQuery<DashboardData>({
         </Row>
       </Container>
 
-    <TaskModal
-        show={showTaskModal}
-        onHide={() => setShowTaskModal(false)}
-        householdId={1}
-        initialTask={null}
-      />
+   <TaskModal
+  show={showTaskModal}
+  onHide={() => setShowTaskModal(false)}
+  initialTask={null}
+/>
+
 
     </DashboardLayout>
   );
