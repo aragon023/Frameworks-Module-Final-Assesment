@@ -6,7 +6,7 @@ import { useMembers } from "../hooks/useMembers";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [showSidebar, setShowSidebar] = useState(false);
-  const { data: members, isLoading, error } = useMembers(); // ✅ no householdId
+  const { data: members, isLoading, error } = useMembers(); 
   const navigate = useNavigate();
 
   const handleLogout = () => {
