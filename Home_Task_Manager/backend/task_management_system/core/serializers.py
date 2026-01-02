@@ -62,8 +62,29 @@ class TaskRowSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     """
     Full serializer for creating, updating, and deleting tasks.
-    Enforces that you cannot assign both a member and a pet.
+
+    Security:
+    - household is read-only and set server-side from request.user.household
+    - category / assignee_member / assignee_pet must belong to the same household
+    - member and pet CAN both be set
     """
+
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.none(),
+        required=False,
+        allow_null=True,
+    )
+    assignee_member = serializers.PrimaryKeyRelatedField(
+        queryset=Member.objects.none(),
+        required=False,
+        allow_null=True,
+    )
+    assignee_pet = serializers.PrimaryKeyRelatedField(
+        queryset=Pet.objects.none(),
+        required=False,
+        allow_null=True,
+    )
+
     class Meta:
         model = Task
         fields = [
@@ -81,7 +102,44 @@ class TaskSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["created_at", "updated_at"]
+        read_only_fields = ["id", "household", "created_at", "updated_at", "completed_at"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+
+        if user and getattr(user, "is_authenticated", False) and getattr(user, "household_id", None):
+            hh_id = user.household_id
+            self.fields["category"].queryset = Category.objects.filter(household_id=hh_id)
+            self.fields["assignee_member"].queryset = Member.objects.filter(household_id=hh_id)
+            self.fields["assignee_pet"].queryset = Pet.objects.filter(household_id=hh_id)
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        household = getattr(user, "household", None)
+
+        if user and getattr(user, "is_authenticated", False) and household is None:
+            raise serializers.ValidationError("User is not associated with a household.")
+
+        member = attrs.get("assignee_member")
+        pet = attrs.get("assignee_pet")
+        category = attrs.get("category")
+
+        # Defense-in-depth: ensure related objects belong to the same household
+        if household:
+            if category and getattr(category, "household_id", None) != household.id:
+                raise serializers.ValidationError({"category": "Category must belong to your household."})
+
+            if member and getattr(member, "household_id", None) != household.id:
+                raise serializers.ValidationError({"assignee_member": "Member must belong to your household."})
+
+            if pet and getattr(pet, "household_id", None) != household.id:
+                raise serializers.ValidationError({"assignee_pet": "Pet must belong to your household."})
+
+        return attrs
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -115,7 +173,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
 
         return user
-
 
 class CurrentUserSerializer(serializers.ModelSerializer):
     household = serializers.SerializerMethodField()

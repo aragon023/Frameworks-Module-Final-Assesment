@@ -78,6 +78,7 @@ export function useCreateTask() {
 
   return useMutation({
     mutationFn: async (payload: TaskPayload) => {
+
       const res = await fetch(`${API_BASE}/tasks/`, {
         method: "POST",
         headers: {
@@ -86,6 +87,7 @@ export function useCreateTask() {
         },
         body: JSON.stringify(payload),
       });
+
       if (!res.ok) throw new Error("Failed to create task");
       return res.json() as Promise<Task>;
     },
