@@ -56,6 +56,8 @@ class DashboardView(APIView):
         "upcoming": [TaskRow...]
       }
     """
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         household_id = request.query_params.get("household")
 
