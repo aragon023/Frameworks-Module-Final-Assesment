@@ -12,6 +12,7 @@ from .views import (
     PasswordResetConfirmView,
     MeView,
     ChangePasswordView,
+    GoogleAuthView,
 )
 
 router = DefaultRouter()
@@ -29,4 +30,5 @@ urlpatterns = [
     path("me/", MeView.as_view(), name="me"),
     path("change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("", include(router.urls)),
+    path("auth/google/", GoogleAuthView.as_view(), name="auth-google"),
 ]

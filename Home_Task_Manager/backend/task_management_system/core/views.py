@@ -5,18 +5,22 @@ from django.utils import timezone
 from django.db.models import Q
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-
-from rest_framework.permissions import IsAuthenticated
-
+from django.conf import settings
+from django.db import transaction
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 
 from .utils import send_password_reset_email
 
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 from .models import Task, Member, Category, Pet, Household
 from .serializers import (
@@ -267,6 +271,92 @@ class RegisterView(APIView):
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class GoogleAuthView(APIView):
+    """
+    POST /api/auth/google/
+    Body: { "id_token": "<google-id-token>" }
+
+    Returns:
+      { "access": "...", "refresh": "..." }
+    """
+    permission_classes = [AllowAny]
+
+    @transaction.atomic
+    def post(self, request):
+        token = request.data.get("id_token")
+        if not token:
+            return Response({"detail": "id_token required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not getattr(settings, "GOOGLE_OAUTH_CLIENT_ID", ""):
+            return Response({"detail": "GOOGLE_OAUTH_CLIENT_ID not configured"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # 1) Verify Google ID token
+        try:
+            idinfo = id_token.verify_oauth2_token(
+                token,
+                google_requests.Request(),
+                settings.GOOGLE_OAUTH_CLIENT_ID,
+            )
+        except Exception:
+            return Response({"detail": "Invalid Google token"}, status=status.HTTP_400_BAD_REQUEST)
+
+        email = (idinfo.get("email") or "").strip().lower()
+        if not email:
+            return Response({"detail": "Google token missing email"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Email Verification
+        if idinfo.get("email_verified") is False:
+            return Response({"detail": "Google email not verified"}, status=status.HTTP_400_BAD_REQUEST)
+
+        given_name = (idinfo.get("given_name") or "").strip()
+        family_name = (idinfo.get("family_name") or "").strip()
+        full_name = (idinfo.get("name") or "").strip()
+
+        # 2) Find existing user
+        user = User.objects.filter(email__iexact=email).first()
+
+        # 3) Create user + household if new
+        if not user:
+            household_name = f"{full_name}'s Household" if full_name else f"{email}'s Household"
+            household = Household.objects.create(name=household_name)
+
+            # Create user with safe defaults.
+            # If your custom User model requires username, this covers it.
+            user = User.objects.create(
+                email=email,
+                username=email,  # remove if your user model doesn't have username
+                first_name=given_name,
+                last_name=family_name,
+                household=household,
+            )
+        else:
+            # Safety: if an old user somehow has no household, create one.
+            if getattr(user, "household_id", None) is None:
+                household_name = f"{full_name}'s Household" if full_name else f"{email}'s Household"
+                user.household = Household.objects.create(name=household_name)
+                user.save(update_fields=["household"])
+
+            # Optional: fill names if blank
+            update_fields = []
+            if hasattr(user, "first_name") and not user.first_name and given_name:
+                user.first_name = given_name
+                update_fields.append("first_name")
+            if hasattr(user, "last_name") and not user.last_name and family_name:
+                user.last_name = family_name
+                update_fields.append("last_name")
+            if update_fields:
+                user.save(update_fields=update_fields)
+
+        # 4) Issue SimpleJWT tokens (same as /api/token/)
+        refresh = RefreshToken.for_user(user)
+        return Response(
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class PasswordResetRequestView(APIView):
