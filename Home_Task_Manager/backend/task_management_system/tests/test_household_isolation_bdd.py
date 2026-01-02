@@ -2,6 +2,7 @@ import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 from rest_framework.test import APIClient
 from django.contrib.auth import get_user_model
+pytestmark = pytest.mark.django_db
 
 from core.models import Household, Task
 
