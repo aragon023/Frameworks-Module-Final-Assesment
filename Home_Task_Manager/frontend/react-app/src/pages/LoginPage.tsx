@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Container, Row, Col, Card, Form, Button, Alert } from "react-bootstrap";
 import { useNavigate, Link } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 
 const API_BASE = import.meta.env.VITE_API_BASE as string;
 
@@ -31,18 +32,44 @@ export default function LoginPage() {
       }
 
       const data = await res.json();
-
-      // Store tokens in localStorage for now
       localStorage.setItem("access", data.access);
       localStorage.setItem("refresh", data.refresh);
 
       setLoading(false);
-
-      // Redirect to dashboard after login
       navigate("/");
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async (idToken: string) => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/google/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_token: idToken }),
+      });
+
+      if (!res.ok) {
+        setError("Google login failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      const data = await res.json();
+      localStorage.setItem("access", data.access);
+      localStorage.setItem("refresh", data.refresh);
+
+      setLoading(false);
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+      setError("Google login failed. Please try again.");
       setLoading(false);
     }
   };
@@ -73,6 +100,7 @@ export default function LoginPage() {
                     onChange={(e) => setUsername(e.target.value)}
                     autoComplete="username"
                     required
+                    disabled={loading}
                   />
                 </Form.Group>
 
@@ -84,6 +112,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
                     required
+                    disabled={loading}
                   />
                 </Form.Group>
 
@@ -97,15 +126,32 @@ export default function LoginPage() {
                 </Button>
               </Form>
 
-              <div className="text-center mt-3 small">
-                  Don&apos;t have an account? <Link to="/register">Create one</Link>
-                </div>
+              {/* Divider */}
+              <div className="text-center my-3 text-muted">or</div>
 
-                <div className="text-end mt-2">
-                  <Link to="/forgot-password" className="text-sm text-primary-600 hover:underline">
-                    Forgot your password?
-                  </Link>
-                </div>
+              {/* Google button */}
+              <div className="d-flex justify-content-center">
+                <GoogleLogin
+                  onSuccess={(credResp) => {
+                    if (credResp.credential) {
+                      handleGoogleLogin(credResp.credential);
+                    } else {
+                      setError("Google login failed: missing credential.");
+                    }
+                  }}
+                  onError={() => setError("Google login failed. Please try again.")}
+                />
+              </div>
+
+              <div className="text-center mt-3 small">
+                Don&apos;t have an account? <Link to="/register">Create one</Link>
+              </div>
+
+              <div className="text-end mt-2">
+                <Link to="/forgot-password" className="text-sm text-primary-600 hover:underline">
+                  Forgot your password?
+                </Link>
+              </div>
             </Card.Body>
           </Card>
         </Col>
