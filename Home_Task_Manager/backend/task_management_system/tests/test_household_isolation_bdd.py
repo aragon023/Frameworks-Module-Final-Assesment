@@ -3,7 +3,7 @@ from pytest_bdd import scenario, given, when, then, parsers
 from rest_framework.test import APIClient
 from django.contrib.auth import get_user_model
 
-from task_management_system.core.models import Household, Task
+from core.models import Household, Task
 
 User = get_user_model()
 
