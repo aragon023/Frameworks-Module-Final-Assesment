@@ -2,6 +2,9 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from datetime import datetime, time
+from django.utils.dateparse import parse_date
+from django.utils.timezone import make_aware, get_current_timezone
 from django.db.models import Q
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -10,6 +13,8 @@ from django.db import transaction
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
+
+
 
 from .utils import send_password_reset_email
 
@@ -36,59 +41,21 @@ from .serializers import (
 User = get_user_model()
 password_reset_token = PasswordResetTokenGenerator()
 
-def get_default_household():
-    """
-    Ensure there's a default household (pk=1) and return it.
-    Adjust defaults if your Household model has extra required fields.
-    """
-    household, _ = Household.objects.get_or_create(
-        pk=1,
-        defaults={"name": "Default Household"},
-    )
-    return household
-
-
 
 class DashboardView(APIView):
-    """
-    GET /api/dashboard/?household=<id>
-
-    Returns:
-      {
-        "stats": { "completed_this_week": int, "pending_rewards": int },
-        "overdue": [TaskRow...],
-        "upcoming": [TaskRow...]
-      }
-    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        household_id = request.query_params.get("household")
-
-        qs = Task.objects.all()
-        if household_id:
-            qs = qs.filter(household_id=household_id)
+        qs = Task.objects.filter(household=request.user.household)
 
         now = timezone.now()
         start_of_week = now - timedelta(days=now.weekday())
 
-        completed_this_week = qs.filter(
-            completed=True,
-            completed_at__gte=start_of_week
-        ).count()
-
-        # Simple placeholder metric: number of completed tasks
+        completed_this_week = qs.filter(completed=True, completed_at__gte=start_of_week).count()
         pending_rewards = qs.filter(completed=True).count()
 
-        overdue = qs.filter(
-            completed=False,
-            due_date__lt=now
-        ).order_by('due_date')[:10]
-
-        upcoming = qs.filter(
-            completed=False,
-            due_date__gte=now
-        ).order_by('due_date')[:10]
+        overdue = qs.filter(completed=False, due_date__lt=now).order_by("due_date")[:10]
+        upcoming = qs.filter(completed=False, due_date__gte=now).order_by("due_date")[:10]
 
         return Response({
             "stats": {
@@ -96,72 +63,40 @@ class DashboardView(APIView):
                 "pending_rewards": pending_rewards,
             },
             "overdue": TaskRowSerializer(overdue, many=True).data,
-            "upcoming": TaskRowSerializer(upcoming, many=True).data
+            "upcoming": TaskRowSerializer(upcoming, many=True).data,
         })
 
 
 class MembersListView(APIView):
-    """
-    GET /api/members/?household=<id>
-    """
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        household_id = request.query_params.get("household")
-        qs = Member.objects.all()
-        if household_id:
-            qs = qs.filter(household_id=household_id)
-        data = MemberSerializer(qs.order_by("name"), many=True).data
+        qs = Member.objects.filter(household=request.user.household).order_by("name")
+        data = MemberSerializer(qs, many=True).data
         return Response(data)
 
 
 class MemberViewSet(viewsets.ModelViewSet):
-    """
-    CRUD for members (family).
-    Uses /api/member-items/ to avoid clashing with /api/members/ (list-only).
-    """
-    queryset = Member.objects.all().order_by("name")
     serializer_class = MemberSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        household = self.request.query_params.get("household")
-        if household:
-            qs = qs.filter(household_id=household)
-        else:
-            # MVP: default to household 1
-            qs = qs.filter(household_id=1)
-        return qs
+        return Member.objects.filter(household=self.request.user.household).order_by("name")
 
     def perform_create(self, serializer):
-        # MVP: assign new members to the default household
-        household = get_default_household()
-        serializer.save(household=household)
-
+        serializer.save(household=self.request.user.household)
 
 
 class PetViewSet(viewsets.ModelViewSet):
-    """
-    CRUD for pets.
-    Pets are linked to tasks but not responsible for them.
-    """
-    queryset = Pet.objects.all().order_by("name")
     serializer_class = PetSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        household = self.request.query_params.get("household")
-        if household:
-            qs = qs.filter(household_id=household)
-        else:
-            # MVP: default to household 1
-            qs = qs.filter(household_id=1)
-        return qs
+        return Pet.objects.filter(household=self.request.user.household).order_by("name")
 
     def perform_create(self, serializer):
-        """
-        Always create pets in the default household (pk=1).
-        """
-        household = get_default_household()
-        serializer.save(household=household)
+        serializer.save(household=self.request.user.household)
+
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -181,7 +116,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # 🔐 Always scope to user's household
+        # Always scope to user's household
         qs = Task.objects.filter(
             household=self.request.user.household
         ).order_by("-created_at")
@@ -358,6 +293,51 @@ class GoogleAuthView(APIView):
             status=status.HTTP_200_OK,
         )
 
+class CalendarTasksView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        GET /api/calendar/tasks/?start=YYYY-MM-DD&end=YYYY-MM-DD
+        Returns tasks overlapping the [start, end) range, household-scoped.
+        """
+        start_param = request.query_params.get("start")
+        end_param = request.query_params.get("end")
+
+        if not start_param or not end_param:
+            return Response(
+                {"detail": "start and end query parameters are required (YYYY-MM-DD)."},
+                status=400,
+            )
+
+        # Parse as dates (recommended for calendar month/week views)
+        start_date = parse_date(start_param)
+        end_date = parse_date(end_param)
+
+        if not start_date or not end_date:
+            return Response(
+                {"detail": "Invalid date format. Use YYYY-MM-DD for start and end."},
+                status=400,
+            )
+
+        tz = get_current_timezone()
+        start_dt = make_aware(datetime.combine(start_date, time.min), timezone=tz)
+        end_dt = make_aware(datetime.combine(end_date, time.min), timezone=tz)
+
+        # Household scoped
+        qs = Task.objects.filter(household=request.user.household)
+
+        # Overlap logic:
+        # If start_at exists: task window is [start_at, due_date]
+        # Else: treat task as "instant" at due_date
+        # Include tasks whose window overlaps [start_dt, end_dt)
+        qs = qs.filter(
+            Q(start_at__isnull=False, due_date__isnull=False, start_at__lt=end_dt, due_date__gte=start_dt)
+            | Q(start_at__isnull=True, due_date__isnull=False, due_date__gte=start_dt, due_date__lt=end_dt)
+        ).order_by("due_date")
+
+        data = TaskSerializer(qs, many=True, context={"request": request}).data
+        return Response(data)
 
 class PasswordResetRequestView(APIView):
     """

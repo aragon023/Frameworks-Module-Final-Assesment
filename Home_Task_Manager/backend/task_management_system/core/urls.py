@@ -13,6 +13,7 @@ from .views import (
     MeView,
     ChangePasswordView,
     GoogleAuthView,
+    CalendarTasksView
 )
 
 router = DefaultRouter()
@@ -31,4 +32,5 @@ urlpatterns = [
     path("change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("", include(router.urls)),
     path("auth/google/", GoogleAuthView.as_view(), name="auth-google"),
+    path("calendar/tasks/", CalendarTasksView.as_view(), name="calendar-tasks"),
 ]
