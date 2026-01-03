@@ -95,14 +95,34 @@ class TaskSerializer(serializers.ModelSerializer):
             "category",
             "assignee_member",
             "assignee_pet",
+            "start_at",
             "due_date",
             "priority",
             "completed",
             "completed_at",
             "created_at",
             "updated_at",
+            "google_calendar_id",
+            "google_event_id",
+            "google_last_synced_at",
+            "google_sync_status",
+            "google_sync_error",
         ]
-        read_only_fields = ["id", "household", "created_at", "updated_at", "completed_at"]
+
+        read_only_fields = [
+            "id",
+            "household",
+            "created_at",
+            "updated_at",
+            "completed_at",
+
+            # keep linkage server-owned
+            "google_calendar_id",
+            "google_event_id",
+            "google_last_synced_at",
+            "google_sync_status",
+            "google_sync_error",
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -139,7 +159,24 @@ class TaskSerializer(serializers.ModelSerializer):
             if pet and getattr(pet, "household_id", None) != household.id:
                 raise serializers.ValidationError({"assignee_pet": "Pet must belong to your household."})
 
+        # Calendar validation: start_at must be <= due_date
+        start_at = attrs.get("start_at")
+        due_date = attrs.get("due_date")
+
+        # Support PATCH (partial updates): fall back to existing instance values
+        if self.instance is not None:
+            if start_at is None:
+                start_at = getattr(self.instance, "start_at", None)
+            if due_date is None:
+                due_date = getattr(self.instance, "due_date", None)
+
+        if start_at and due_date and start_at > due_date:
+            raise serializers.ValidationError(
+                {"start_at": "start_at must be before or equal to due_date."}
+            )
+
         return attrs
+
 
 
 class RegisterSerializer(serializers.ModelSerializer):
