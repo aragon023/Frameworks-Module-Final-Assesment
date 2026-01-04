@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useCalendarTasks } from "../../hooks/useCalendarTasks";
+import TaskModal from "../TaskModal";
+import type { Task } from "../../hooks/useTasks";
 
 function toISODate(d: Date): string {
-  // YYYY-MM-DD (local calendar date)
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
@@ -14,7 +15,7 @@ function startOfMonth(d: Date) {
 }
 
 function startOfGrid(monthStart: Date) {
-  // Sunday start (0). If you want Monday start, adjust.
+  // Sunday-start grid
   const day = monthStart.getDay();
   const gridStart = new Date(monthStart);
   gridStart.setDate(monthStart.getDate() - day);
@@ -29,16 +30,17 @@ function addDays(d: Date, days: number) {
 
 export default function MonthCalendar() {
   const [cursor, setCursor] = useState(() => new Date());
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const monthStart = useMemo(() => startOfMonth(cursor), [cursor]);
   const gridStart = useMemo(() => startOfGrid(monthStart), [monthStart]);
 
-  // Render 6 weeks (42 days) to cover all month layouts
+  // Render 6 weeks (42 days)
   const days = useMemo(() => {
     return Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
   }, [gridStart]);
 
-  // API range: monthStart -> first day of next month
+  // API range: [monthStart, first day of next month)
   const rangeStart = useMemo(() => toISODate(monthStart), [monthStart]);
   const rangeEnd = useMemo(() => {
     const nextMonth = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
@@ -47,17 +49,17 @@ export default function MonthCalendar() {
 
   const { data: tasks = [], isLoading, error } = useCalendarTasks(rangeStart, rangeEnd);
 
-  // Index tasks by due_date day (YYYY-MM-DD)
+  // Index tasks by day based on due_date (YYYY-MM-DD)
   const tasksByDay = useMemo(() => {
     const map = new Map<string, typeof tasks>();
     for (const t of tasks) {
       if (!t.due_date) continue;
-      const dayKey = t.due_date.slice(0, 10); // ISO date part
+      const dayKey = t.due_date.slice(0, 10);
       const arr = map.get(dayKey) ?? [];
       arr.push(t);
       map.set(dayKey, arr);
     }
-    // Optional: sort within day by time (due_date)
+    // Sort by due_date time within each day
     for (const [k, arr] of map.entries()) {
       arr.sort((a, b) => (a.due_date || "").localeCompare(b.due_date || ""));
       map.set(k, arr);
@@ -126,10 +128,13 @@ export default function MonthCalendar() {
 
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {dayTasks.slice(0, 3).map((t) => (
-                  <div
+                  <button
                     key={t.id}
-                    title={t.title}
+                    type="button"
+                    onClick={() => setSelectedTask(t)}
                     style={{
+                      textAlign: "left",
+                      cursor: "pointer",
                       fontSize: 12,
                       padding: "4px 6px",
                       borderRadius: 6,
@@ -139,10 +144,12 @@ export default function MonthCalendar() {
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
                     }}
+                    title={t.title}
                   >
                     {t.title}
-                  </div>
+                  </button>
                 ))}
+
                 {dayTasks.length > 3 && (
                   <div style={{ fontSize: 12, opacity: 0.7 }}>+{dayTasks.length - 3} more</div>
                 )}
@@ -151,6 +158,13 @@ export default function MonthCalendar() {
           );
         })}
       </div>
+
+      {/* Edit task modal */}
+      <TaskModal
+        show={selectedTask !== null}
+        onHide={() => setSelectedTask(null)}
+        initialTask={selectedTask}
+      />
     </div>
   );
 }

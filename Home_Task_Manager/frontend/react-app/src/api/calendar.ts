@@ -1,21 +1,5 @@
-import { getAuthHeaders } from "./auth"; 
-
-export type Task = {
-  id: number;
-  title: string;
-  description?: string;
-  start_at: string | null;
-  due_date: string | null;
-  priority: "low" | "med" | "high";
-  completed: boolean;
-
-  assignee_member: number | null;
-  assignee_pet: number | null;
-
-  // optional google fields (read-only)
-  google_event_id?: string | null;
-  google_calendar_id?: string | null;
-};
+import { getAuthHeaders } from "./auth";
+import type { Task } from "../hooks/useTasks";
 
 export async function fetchCalendarTasks(start: string, end: string): Promise<Task[]> {
   const res = await fetch(
