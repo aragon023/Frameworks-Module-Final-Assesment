@@ -10,6 +10,7 @@ export type Task = {
   category: number | null;
   assignee_member: number | null;
   assignee_pet: number | null;
+  start_at: string | null;
   due_date: string | null;
   priority: "low" | "med" | "high";
   completed: boolean;
@@ -24,6 +25,7 @@ export type TaskPayload = {
   category?: number | null;
   assignee_member?: number | null;
   assignee_pet?: number | null;
+  start_at?: string | null;
   due_date?: string | null;
   priority?: "low" | "med" | "high";
   completed?: boolean;

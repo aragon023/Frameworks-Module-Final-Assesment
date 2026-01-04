@@ -39,6 +39,8 @@ export default function TaskModal({
   const [categoryId, setCategoryId] = useState<string>("");
   const [petId, setPetId] = useState<string>("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [startAt, setStartAt] = useState<string>("");
+
 
   const { data: members, isLoading: membersLoading } = useMembers();
   const { data: categories, isLoading: categoriesLoading } = useCategories();
@@ -53,7 +55,10 @@ export default function TaskModal({
       setTitle(initialTask.title);
       setDescription(initialTask.description || "");
       setPriority(initialTask.priority);
+
+      setStartAt(toDateTimeLocal(initialTask.start_at));
       setDueDate(toDateTimeLocal(initialTask.due_date));
+      
       setAssigneeMemberId(
         initialTask.assignee_member ? String(initialTask.assignee_member) : ""
       );
@@ -67,6 +72,7 @@ export default function TaskModal({
       setTitle("");
       setDescription("");
       setPriority("low");
+      setStartAt("");
       setDueDate("");
       setAssigneeMemberId("");
       setCategoryId("");
@@ -88,11 +94,13 @@ export default function TaskModal({
       title: title.trim(),
       description: description.trim() || "",
       priority,
+      start_at: startAt ? new Date(startAt).toISOString() : null, 
       due_date: dueDate ? new Date(dueDate).toISOString() : null,
       assignee_member: assigneeMemberId ? Number(assigneeMemberId) : null,
       assignee_pet: petId ? Number(petId) : null,
       category: categoryId ? Number(categoryId) : null,
     };
+
 
     try {
       if (isEdit && initialTask) {
@@ -142,6 +150,17 @@ export default function TaskModal({
           </Form.Group>
 
           <Row className="mb-3">
+            <Col md={6}>
+              <Form.Group>
+                <Form.Label>Start date & time</Form.Label>
+                <Form.Control
+                  type="datetime-local"
+                  value={startAt}
+                  onChange={(e) => setStartAt(e.target.value)}
+                />
+              </Form.Group>
+            </Col>
+
             <Col md={6}>
               <Form.Group>
                 <Form.Label>Due date & time</Form.Label>
