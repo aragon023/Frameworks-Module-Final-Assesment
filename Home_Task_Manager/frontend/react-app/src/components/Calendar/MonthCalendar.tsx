@@ -3,6 +3,8 @@ import { useCalendarTasks } from "../../hooks/useCalendarTasks";
 import TaskModal from "../TaskModal";
 import type { Task } from "../../hooks/useTasks";
 
+/* ------------------ date helpers ------------------ */
+
 function toISODate(d: Date): string {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -15,8 +17,7 @@ function startOfMonth(d: Date) {
 }
 
 function startOfGrid(monthStart: Date) {
-  // Sunday-start grid
-  const day = monthStart.getDay();
+  const day = monthStart.getDay(); // Sunday start
   const gridStart = new Date(monthStart);
   gridStart.setDate(monthStart.getDate() - day);
   return gridStart;
@@ -28,6 +29,24 @@ function addDays(d: Date, days: number) {
   return nd;
 }
 
+function eachDayBetween(startISO: string, endISO: string): string[] {
+  const days: string[] = [];
+  const current = new Date(startISO);
+  const end = new Date(endISO);
+
+  current.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+
+  while (current <= end) {
+    days.push(current.toISOString().slice(0, 10));
+    current.setDate(current.getDate() + 1);
+  }
+
+  return days;
+}
+
+/* ------------------ component ------------------ */
+
 export default function MonthCalendar() {
   const [cursor, setCursor] = useState(() => new Date());
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -35,61 +54,89 @@ export default function MonthCalendar() {
   const monthStart = useMemo(() => startOfMonth(cursor), [cursor]);
   const gridStart = useMemo(() => startOfGrid(monthStart), [monthStart]);
 
-  // Render 6 weeks (42 days)
-  const days = useMemo(() => {
-    return Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
-  }, [gridStart]);
+  // 6-week grid (42 days)
+  const days = useMemo(
+    () => Array.from({ length: 42 }, (_, i) => addDays(gridStart, i)),
+    [gridStart]
+  );
 
-  // API range: [monthStart, first day of next month)
+  // API range
   const rangeStart = useMemo(() => toISODate(monthStart), [monthStart]);
   const rangeEnd = useMemo(() => {
-    const nextMonth = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
+    const nextMonth = new Date(
+      monthStart.getFullYear(),
+      monthStart.getMonth() + 1,
+      1
+    );
     return toISODate(nextMonth);
   }, [monthStart]);
 
-  const { data: tasks = [], isLoading, error } = useCalendarTasks(rangeStart, rangeEnd);
+  const {
+    data: tasks = [],
+    isLoading,
+    error,
+  } = useCalendarTasks(rangeStart, rangeEnd);
 
-  // Index tasks by day based on due_date (YYYY-MM-DD)
+  /* -------- STEP 3.7: multi-day aware indexing -------- */
+
   const tasksByDay = useMemo(() => {
-    const map = new Map<string, typeof tasks>();
+    const map = new Map<string, Task[]>();
+
     for (const t of tasks) {
-      if (!t.due_date) continue;
-      const dayKey = t.due_date.slice(0, 10);
-      const arr = map.get(dayKey) ?? [];
-      arr.push(t);
-      map.set(dayKey, arr);
+      // Multi-day or scheduled task
+      if (t.start_at && t.due_date) {
+        const days = eachDayBetween(t.start_at, t.due_date);
+        for (const day of days) {
+          const arr = map.get(day) ?? [];
+          arr.push(t);
+          map.set(day, arr);
+        }
+        continue;
+      }
+
+      // Due-date-only task
+      if (t.due_date) {
+        const dayKey = t.due_date.slice(0, 10);
+        const arr = map.get(dayKey) ?? [];
+        arr.push(t);
+        map.set(dayKey, arr);
+      }
     }
-    // Sort by due_date time within each day
-    for (const [k, arr] of map.entries()) {
-      arr.sort((a, b) => (a.due_date || "").localeCompare(b.due_date || ""));
-      map.set(k, arr);
-    }
+
     return map;
   }, [tasks]);
 
-  const monthLabel = cursor.toLocaleString(undefined, { month: "long", year: "numeric" });
+  const monthLabel = cursor.toLocaleString(undefined, {
+    month: "long",
+    year: "numeric",
+  });
 
   function prevMonth() {
     setCursor((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
   }
+
   function nextMonth() {
     setCursor((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
   }
 
   return (
     <div style={{ padding: 16 }}>
+      {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
         <button onClick={prevMonth}>←</button>
         <h2 style={{ margin: 0 }}>{monthLabel}</h2>
         <button onClick={nextMonth}>→</button>
-        <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.75 }}>
+        <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.7 }}>
           Range: {rangeStart} → {rangeEnd}
         </div>
       </div>
 
       {isLoading && <div>Loading…</div>}
-      {error instanceof Error && <div style={{ color: "crimson" }}>{error.message}</div>}
+      {error instanceof Error && (
+        <div style={{ color: "crimson" }}>{error.message}</div>
+      )}
 
+      {/* Calendar grid */}
       <div
         style={{
           display: "grid",
@@ -116,13 +163,21 @@ export default function MonthCalendar() {
                 borderRadius: 8,
                 padding: 8,
                 minHeight: 110,
-                background: inMonth ? "white" : "rgba(0,0,0,0.03)",
+                background: inMonth ? "white" : "rgba(0,0,0,0.04)",
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 6,
+                }}
+              >
                 <div style={{ fontWeight: 600 }}>{day.getDate()}</div>
                 {dayTasks.length > 0 && (
-                  <div style={{ fontSize: 12, opacity: 0.7 }}>{dayTasks.length}</div>
+                  <div style={{ fontSize: 12, opacity: 0.7 }}>
+                    {dayTasks.length}
+                  </div>
                 )}
               </div>
 
@@ -139,7 +194,9 @@ export default function MonthCalendar() {
                       padding: "4px 6px",
                       borderRadius: 6,
                       border: "1px solid rgba(0,0,0,0.10)",
-                      background: t.completed ? "rgba(0,0,0,0.06)" : "rgba(0,0,0,0.02)",
+                      background: t.completed
+                        ? "rgba(0,0,0,0.08)"
+                        : "rgba(0,0,0,0.03)",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -151,7 +208,9 @@ export default function MonthCalendar() {
                 ))}
 
                 {dayTasks.length > 3 && (
-                  <div style={{ fontSize: 12, opacity: 0.7 }}>+{dayTasks.length - 3} more</div>
+                  <div style={{ fontSize: 12, opacity: 0.7 }}>
+                    +{dayTasks.length - 3} more
+                  </div>
                 )}
               </div>
             </div>
@@ -159,7 +218,7 @@ export default function MonthCalendar() {
         })}
       </div>
 
-      {/* Edit task modal */}
+      {/* Task modal */}
       <TaskModal
         show={selectedTask !== null}
         onHide={() => setSelectedTask(null)}
