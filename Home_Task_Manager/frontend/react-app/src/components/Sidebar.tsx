@@ -5,11 +5,11 @@ import { useMembers } from "../hooks/useMembers";
 type SidebarProps = {
   show: boolean;
   onHide: () => void;
-  householdId?: number;
 };
 
-export default function Sidebar({ show, onHide, householdId = 1 }: SidebarProps) {
-  const { data, isLoading, error } = useMembers(householdId);
+export default function Sidebar({ show, onHide }: SidebarProps) {
+  const { data, isLoading, error } = useMembers();
+
 
   return (
     <Offcanvas
@@ -70,8 +70,11 @@ export default function Sidebar({ show, onHide, householdId = 1 }: SidebarProps)
             🐾 Pets
           </Nav.Link>
 
-          {/* Future features (not wired yet) */}
-          <Nav.Link className="btn btn-light text-start">
+         <Nav.Link
+            as={NavLink}
+            to="/calendar"
+            className="btn btn-light text-start"
+          >
             📅 Calendar
           </Nav.Link>
 

@@ -1,12 +1,14 @@
 import { useState, type ReactNode } from "react";
 import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { useMembers } from "../hooks/useMembers";
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+type Props = { children: ReactNode };
+
+export default function DashboardLayout({ children }: Props) {
   const [showSidebar, setShowSidebar] = useState(false);
-  const { data: members, isLoading, error } = useMembers(); 
+  const { data: members, isLoading, error } = useMembers();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -15,14 +17,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     navigate("/login");
   };
 
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `btn btn-light text-start ${isActive ? "fw-bold border" : ""}`;
+
   return (
     <div className="min-vh-100 bg-light">
       {/* Mobile top bar */}
       <div className="d-md-none d-flex justify-content-between align-items-center p-3 bg-white border-bottom">
-        <Button
-          variant="outline-secondary"
-          onClick={() => setShowSidebar(true)}
-        >
+        <Button variant="outline-secondary" onClick={() => setShowSidebar(true)}>
           ☰
         </Button>
         <div className="fw-bold">HomeTasker</div>
@@ -40,25 +42,33 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <div className="fw-bold fs-5 mb-3">HomeTasker</div>
 
             <div className="d-grid gap-2 mb-3">
-              <Button variant="light" className="text-start" onClick={() => navigate("/")}>
+              <NavLink to="/" end className={navLinkClass}>
                 🏠 Dashboard
-              </Button>
-              <Button variant="light" className="text-start" onClick={() => navigate("/tasks")}>
-                📋 Tasks
-              </Button>
-              <Button variant="light" className="text-start" onClick={() => navigate("/categories")}>
-                🗂️ Categories
-              </Button>
-              <Button variant="light" className="text-start" onClick={() => navigate("/members")}>
-                👨‍👩‍👧 Family
-              </Button>
-              <Button variant="light" className="text-start" onClick={() => navigate("/pets")}>
-                🐾 Pets
-              </Button>
+              </NavLink>
 
-              <Button variant="light" className="text-start" onClick={() => navigate("/profile")}>
+              <NavLink to="/tasks" className={navLinkClass}>
+                📋 Tasks
+              </NavLink>
+
+              <NavLink to="/categories" className={navLinkClass}>
+                🗂️ Categories
+              </NavLink>
+
+              <NavLink to="/calendar" className={navLinkClass}>
+                📅 Calendar
+              </NavLink>
+
+              <NavLink to="/members" className={navLinkClass}>
+                👨‍👩‍👧 Family
+              </NavLink>
+
+              <NavLink to="/pets" className={navLinkClass}>
+                🐾 Pets
+              </NavLink>
+
+              <NavLink to="/profile" className={navLinkClass}>
                 👤 Profile
-              </Button>
+              </NavLink>
             </div>
 
             <div className="text-muted small mb-2">Family members</div>
@@ -68,9 +78,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <Spinner animation="border" size="sm" />
               </div>
             ) : error ? (
-              <div className="text-danger small mb-2">
-                Failed to load members.
-              </div>
+              <div className="text-danger small mb-2">Failed to load members.</div>
             ) : (
               <div className="d-grid gap-2">
                 {(members ?? []).map((m) => (
@@ -79,11 +87,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                       <img
                         src={m.avatar_url}
                         alt={m.name}
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: "50%",
-                        }}
+                        style={{ width: 32, height: 32, borderRadius: "50%" }}
                       />
                     ) : (
                       <span
@@ -106,7 +110,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {/* Main content */}
           <Col xs={12} md={9} lg={10} className="p-3">
             <div className="d-flex justify-content-end mb-3">
-              <Button variant="outline-secondary" size="sm" onClick={handleLogout}>
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                onClick={handleLogout}
+              >
                 Log out
               </Button>
             </div>
