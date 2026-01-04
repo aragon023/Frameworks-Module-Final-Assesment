@@ -10,6 +10,8 @@ import RequireAuth from "./components/RequireAuth";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ProfilePage from "./pages/ProfilePage";
+import CalendarPage from "./pages/CalendarPage";
+
 
 export default function AppRoutes() {
   return (
@@ -78,6 +80,16 @@ export default function AppRoutes() {
             </RequireAuth>
           }
         />
+
+        <Route
+          path="/calendar"
+          element={
+            <RequireAuth>
+              <CalendarPage />
+            </RequireAuth>
+          }
+        />
+
       </Routes>
     </BrowserRouter>
   );
