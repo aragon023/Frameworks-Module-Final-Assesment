@@ -48,8 +48,12 @@ function eachDayBetween(startISO: string, endISO: string): string[] {
 /* ------------------ component ------------------ */
 
 export default function MonthCalendar() {
+  const isMobile = window.innerWidth < 768;
+
   const [cursor, setCursor] = useState(() => new Date());
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [prefillDueDate, setPrefillDueDate] = useState<string | null>(null);
   const todayKey = toISODate(new Date());
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
 
@@ -150,15 +154,17 @@ export default function MonthCalendar() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
+          gridTemplateColumns: isMobile ? "1fr" : "repeat(7, 1fr)",
           gap: 8,
         }}
       >
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+       {!isMobile &&
+        ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
           <div key={d} style={{ fontWeight: 600, opacity: 0.8 }}>
             {d}
           </div>
         ))}
+
 
         {days.map((day) => {
           const dayKey = toISODate(day);
@@ -173,24 +179,22 @@ export default function MonthCalendar() {
               <div
                 key={dayKey}
                 onClick={() => {
-                  if (dayTasks.length === 0) {
-                    setSelectedTask({
-                      title: "",
-                      due_date: dayKey,
-                    } as Task);
-                  }
+                  setIsCreating(true);
+                  setPrefillDueDate(dayKey);
+                  setSelectedTask(null);
                 }}
-
                 onMouseEnter={() => setHoveredDay(dayKey)}
                 onMouseLeave={() => setHoveredDay(null)}
                 style={{
                   cursor: "pointer",
+                  display: "flex",
+                  flexDirection: isMobile ? "row" : "column",
                   border: isToday
                     ? "2px solid #0d6efd"
                     : "1px solid rgba(0,0,0,0.12)",
                   borderRadius: 8,
-                  padding: 8,
-                  minHeight: 110,
+                  padding: isMobile ? 4 : 8,
+                  minHeight: isMobile ? 70 : 110, 
                   transition: "background 0.15s ease",
                   background: isToday
                     ? "rgba(13,110,253,0.08)"
@@ -202,14 +206,16 @@ export default function MonthCalendar() {
                 }}
               >
 
-
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  marginBottom: 6,
+                  alignItems: "center",
+                  marginBottom: isMobile ? 0 : 6,
+                  minWidth: isMobile ? 40 : "auto",
                 }}
               >
+
                 <div style={{ fontWeight: 600 }}>{day.getDate()}</div>
                 {dayTasks.length > 0 && (
                   <div style={{ fontSize: 12, opacity: 0.7 }}>
@@ -223,7 +229,13 @@ export default function MonthCalendar() {
                   <button
                     key={t.id}
                     type="button"
-                    onClick={() => setSelectedTask(t)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsCreating(false);
+                      setPrefillDueDate(null);
+                      setSelectedTask(t);
+                    }}
+
                     style={{
                        textAlign: "left",
                        cursor: "pointer",
@@ -261,11 +273,17 @@ export default function MonthCalendar() {
 
       {/* Task modal */}
       <TaskModal
-        show={selectedTask !== null}
+        show={isCreating || selectedTask !== null}
         onHide={() => {
+          setIsCreating(false);
+          setPrefillDueDate(null);
           setSelectedTask(null);
         }}
-        initialTask={selectedTask}
+        initialTask={
+          isCreating
+            ? ({ due_date: prefillDueDate } as Task)
+            : selectedTask
+        }
       />
     </div>
   );

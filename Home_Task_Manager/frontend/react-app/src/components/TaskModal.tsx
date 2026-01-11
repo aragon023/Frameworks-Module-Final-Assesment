@@ -29,7 +29,7 @@ export default function TaskModal({
   onHide,
   initialTask = null,
 }: TaskModalProps) {
-  const isEdit = !!initialTask;
+  const isEdit = !!initialTask?.id;
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -103,7 +103,7 @@ export default function TaskModal({
 
 
     try {
-      if (isEdit && initialTask) {
+      if (isEdit && initialTask?.id) {
         await updateTask.mutateAsync({
           id: initialTask.id,
           data: payload,
