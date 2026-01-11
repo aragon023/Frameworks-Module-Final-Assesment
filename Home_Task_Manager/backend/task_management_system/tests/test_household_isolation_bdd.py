@@ -37,7 +37,7 @@ def user_in_household_a_is_authenticated(api_client, ctx):
         household=ctx["h1"],
     )
 
-    # Option A (fast): force auth without JWT
+    # force auth without JWT
     api_client.force_authenticate(user=user)
 
     ctx["user"] = user

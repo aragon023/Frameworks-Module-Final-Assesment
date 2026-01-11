@@ -50,6 +50,10 @@ function eachDayBetween(startISO: string, endISO: string): string[] {
 export default function MonthCalendar() {
   const [cursor, setCursor] = useState(() => new Date());
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const todayKey = toISODate(new Date());
+  const [hoveredDay, setHoveredDay] = useState<string | null>(null);
+
+
 
   const monthStart = useMemo(() => startOfMonth(cursor), [cursor]);
   const gridStart = useMemo(() => startOfGrid(monthStart), [monthStart]);
@@ -119,11 +123,17 @@ export default function MonthCalendar() {
     setCursor((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
   }
 
+  function goToToday() {
+  setCursor(new Date());
+}
+
+
   return (
     <div style={{ padding: 16 }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
         <button onClick={prevMonth}>←</button>
+        <button onClick={goToToday}>Today</button>
         <h2 style={{ margin: 0 }}>{monthLabel}</h2>
         <button onClick={nextMonth}>→</button>
         <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.7 }}>
@@ -154,18 +164,45 @@ export default function MonthCalendar() {
           const dayKey = toISODate(day);
           const inMonth = day.getMonth() === monthStart.getMonth();
           const dayTasks = tasksByDay.get(dayKey) ?? [];
+          const isToday = dayKey === todayKey;
+          const isHovered = hoveredDay === dayKey;
+
+
 
           return (
-            <div
-              key={dayKey}
-              style={{
-                border: "1px solid rgba(0,0,0,0.12)",
-                borderRadius: 8,
-                padding: 8,
-                minHeight: 110,
-                background: inMonth ? "white" : "rgba(0,0,0,0.04)",
-              }}
-            >
+              <div
+                key={dayKey}
+                onClick={() => {
+                  if (dayTasks.length === 0) {
+                    setSelectedTask({
+                      title: "",
+                      due_date: dayKey,
+                    } as Task);
+                  }
+                }}
+
+                onMouseEnter={() => setHoveredDay(dayKey)}
+                onMouseLeave={() => setHoveredDay(null)}
+                style={{
+                  cursor: "pointer",
+                  border: isToday
+                    ? "2px solid #0d6efd"
+                    : "1px solid rgba(0,0,0,0.12)",
+                  borderRadius: 8,
+                  padding: 8,
+                  minHeight: 110,
+                  transition: "background 0.15s ease",
+                  background: isToday
+                    ? "rgba(13,110,253,0.08)"
+                    : isHovered
+                    ? "rgba(0,0,0,0.05)"
+                    : inMonth
+                    ? "white"
+                    : "rgba(0,0,0,0.04)",
+                }}
+              >
+
+
               <div
                 style={{
                   display: "flex",
@@ -188,19 +225,23 @@ export default function MonthCalendar() {
                     type="button"
                     onClick={() => setSelectedTask(t)}
                     style={{
-                      textAlign: "left",
-                      cursor: "pointer",
-                      fontSize: 12,
-                      padding: "4px 6px",
-                      borderRadius: 6,
-                      border: "1px solid rgba(0,0,0,0.10)",
-                      background: t.completed
-                        ? "rgba(0,0,0,0.08)"
-                        : "rgba(0,0,0,0.03)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
+                       textAlign: "left",
+                       cursor: "pointer",
+                       fontSize: 12,
+                       padding: "4px 6px",
+                       borderRadius: 6,
+                       border: "1px solid rgba(0,0,0,0.10)",
+                       borderLeft: t.start_at
+                       ? "4px solid #0d6efd"     // scheduled
+                       : "4px dashed rgba(0,0,0,0.4)", // due-only
+                       background: t.completed
+                       ? "rgba(0,0,0,0.08)"
+                       : "rgba(0,0,0,0.03)",
+                       overflow: "hidden",
+                       textOverflow: "ellipsis",
+                       whiteSpace: "nowrap",
+                        }}     
+
                     title={t.title}
                   >
                     {t.title}
@@ -221,7 +262,9 @@ export default function MonthCalendar() {
       {/* Task modal */}
       <TaskModal
         show={selectedTask !== null}
-        onHide={() => setSelectedTask(null)}
+        onHide={() => {
+          setSelectedTask(null);
+        }}
         initialTask={selectedTask}
       />
     </div>
