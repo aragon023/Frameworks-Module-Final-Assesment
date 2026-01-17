@@ -62,6 +62,11 @@ export default function DashboardLayout({ children }: Props) {
                 👨‍👩‍👧 Family
               </NavLink>
 
+              <NavLink to="/household/invites" className={navLinkClass}>
+                ✉️ Invite Members
+              </NavLink>
+
+
               <NavLink to="/pets" className={navLinkClass}>
                 🐾 Pets
               </NavLink>

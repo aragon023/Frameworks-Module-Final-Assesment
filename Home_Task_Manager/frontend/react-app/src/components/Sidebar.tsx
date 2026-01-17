@@ -1,4 +1,4 @@
-import { Offcanvas, Nav, Button, ListGroup, Spinner } from "react-bootstrap";
+import { Offcanvas, Nav, ListGroup, Spinner } from "react-bootstrap";
 import { NavLink } from "react-router-dom";
 import { useMembers } from "../hooks/useMembers";
 
@@ -64,6 +64,15 @@ export default function Sidebar({ show, onHide }: SidebarProps) {
 
           <Nav.Link
             as={NavLink}
+            to="/household/invites"
+            className="btn btn-light text-start"
+          >
+            ✉️ Invite Members
+          </Nav.Link>
+
+
+          <Nav.Link
+            as={NavLink}
             to="/pets"
             className="btn btn-light text-start"
           >
@@ -83,7 +92,7 @@ export default function Sidebar({ show, onHide }: SidebarProps) {
             ⭐ Rewards
           </Nav.Link>
 
-          {/* New: Profile page */}
+          {/* Profile page */}
           <Nav.Link
             as={NavLink}
             to="/profile"
@@ -140,9 +149,11 @@ export default function Sidebar({ show, onHide }: SidebarProps) {
           </ListGroup>
         )}
 
-        <Button variant="success" className="w-100">
+        <NavLink to="/household/invites" className="btn btn-success w-100">
           Invite Member
-        </Button>
+        </NavLink>
+
+
       </Offcanvas.Body>
     </Offcanvas>
   );

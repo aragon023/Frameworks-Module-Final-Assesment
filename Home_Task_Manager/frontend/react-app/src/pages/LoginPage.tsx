@@ -3,7 +3,7 @@ import { Container, Row, Col, Card, Form, Button, Alert } from "react-bootstrap"
 import { useNavigate, Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 
-const API_BASE = import.meta.env.VITE_API_BASE as string;
+const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000/api";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");

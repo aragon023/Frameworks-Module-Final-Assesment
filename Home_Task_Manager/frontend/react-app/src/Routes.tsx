@@ -11,6 +11,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ProfilePage from "./pages/ProfilePage";
 import CalendarPage from "./pages/CalendarPage";
+import HouseholdInvitesPage from "./pages/HouseholdInvitesPage";
 
 
 export default function AppRoutes() {
@@ -89,6 +90,16 @@ export default function AppRoutes() {
             </RequireAuth>
           }
         />
+
+        <Route
+          path="/household/invites"
+          element={
+            <RequireAuth>
+              <HouseholdInvitesPage />
+            </RequireAuth>
+          }
+        />
+
 
       </Routes>
     </BrowserRouter>

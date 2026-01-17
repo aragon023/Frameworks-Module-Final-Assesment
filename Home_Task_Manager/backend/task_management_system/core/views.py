@@ -259,13 +259,13 @@ class GoogleAuthView(APIView):
             household = Household.objects.create(name=household_name)
 
             # Create user with safe defaults.
-            # If your custom User model requires username, this covers it.
             user = User.objects.create(
                 email=email,
-                username=email,  # remove if your user model doesn't have username
+                username=email,  
                 first_name=given_name,
                 last_name=family_name,
                 household=household,
+                role="admin",
             )
         else:
             # Safety: if an old user somehow has no household, create one.
@@ -481,19 +481,34 @@ class HouseholdInviteCreateView(APIView):
 
         invite_link = f"{settings.FRONTEND_BASE_URL}/invite/accept?token={invite.token}"
 
-        # Send email using your existing email setup (Anymail + SendGrid)
         from django.core.mail import send_mail
 
-        send_mail(
-            subject="You’ve been invited to join a household",
-            message=f"Accept your invite here: {invite_link}",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[invite.email],
-            fail_silently=False,
+        email_sent = True
+        email_error = None
+
+        try:
+            send_mail(
+                subject="You’ve been invited to join a household",
+                message=f"Accept your invite here: {invite_link}",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[invite.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            email_sent = False
+            email_error = str(e)
+
+        return Response(
+            {
+                "detail": "Invite created.",
+                "invite_link": invite_link,
+                "email_sent": email_sent,
+                "email_error": email_error,
+            },
+            status=status.HTTP_201_CREATED,
         )
 
-        return Response({"detail": "Invite sent."}, status=status.HTTP_201_CREATED)
-    
+        
 class HouseholdInviteAcceptView(APIView):
     permission_classes = [IsAuthenticated]
 
