@@ -12,6 +12,8 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ProfilePage from "./pages/ProfilePage";
 import CalendarPage from "./pages/CalendarPage";
 import HouseholdInvitesPage from "./pages/HouseholdInvitesPage";
+import AcceptInvitePage from "./pages/AcceptInvitePage";
+
 
 
 export default function AppRoutes() {
@@ -100,6 +102,7 @@ export default function AppRoutes() {
           }
         />
 
+        <Route path="/invite/accept" element={<AcceptInvitePage />} />
 
       </Routes>
     </BrowserRouter>

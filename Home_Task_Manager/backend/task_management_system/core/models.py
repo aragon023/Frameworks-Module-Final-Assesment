@@ -2,7 +2,7 @@ from django.db import models
 import uuid
 from django.utils import timezone
 from datetime import timedelta
-
+from django.conf import settings
 
 class Household(models.Model):
     name = models.CharField(max_length=120)
@@ -12,6 +12,13 @@ class Household(models.Model):
 
 class Member(models.Model):
     household = models.ForeignKey(Household, on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="member_profile",
+    )
     name = models.CharField(max_length=120)
     avatar_url = models.URLField(blank=True, null=True)
 
@@ -76,6 +83,7 @@ class HouseholdInvite(models.Model):
         ("adult", "Adult"),
         ("child", "Child"),
     ]
+
     household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name="invites")
     email = models.EmailField()
     role = models.CharField(max_length=16, choices=ROLE_CHOICES, default="adult")

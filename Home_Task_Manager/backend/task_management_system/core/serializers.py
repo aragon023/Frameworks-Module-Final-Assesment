@@ -15,7 +15,9 @@ class CategorySerializer(serializers.ModelSerializer):
 class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
-        fields = ["id", "name", "avatar_url"]
+        fields = ["id", "name", "avatar_url", "user"]
+        read_only_fields = ["user"]
+
 
 
 class PetSerializer(serializers.ModelSerializer):

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Container, Row, Col, Card, Form, Button, Alert } from "react-bootstrap";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000/api";
@@ -13,6 +13,9 @@ export default function LoginPage() {
 
   const navigate = useNavigate();
 
+  const [searchParams] = useSearchParams();
+  const nextUrl = searchParams.get("next") || "/";
+ 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -36,7 +39,7 @@ export default function LoginPage() {
       localStorage.setItem("refresh", data.refresh);
 
       setLoading(false);
-      navigate("/");
+      navigate(nextUrl);
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");
@@ -66,7 +69,7 @@ export default function LoginPage() {
       localStorage.setItem("refresh", data.refresh);
 
       setLoading(false);
-      navigate("/");
+      navigate(nextUrl);
     } catch (err) {
       console.error(err);
       setError("Google login failed. Please try again.");

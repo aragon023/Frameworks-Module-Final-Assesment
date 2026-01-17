@@ -285,6 +285,16 @@ class GoogleAuthView(APIView):
             if update_fields:
                 user.save(update_fields=update_fields)
 
+            # Ensure this user has a Member profile in the household
+            Member.objects.get_or_create(
+                household=user.household,
+                user=user,
+                defaults={
+                    "name": user.get_full_name().strip() or user.username,
+                    "avatar_url": "",
+                },
+            )
+
         # 4) Issue SimpleJWT tokens (same as /api/token/)
         refresh = RefreshToken.for_user(user)
         return Response(
@@ -525,10 +535,27 @@ class HouseholdInviteAcceptView(APIView):
 
         if invite.is_expired():
             return Response({"detail": "Invite expired."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if request.user.email.strip().lower() != invite.email.strip().lower():
+            return Response(
+                {"detail": "This invite was sent to a different email address."},
+                status=status.HTTP_403_FORBIDDEN,
+        )
+
 
         request.user.household = invite.household
         request.user.role = invite.role
         request.user.save(update_fields=["household", "role"])
+
+        Member.objects.get_or_create(
+            household=invite.household,
+            user=request.user,
+            defaults={
+                "name": request.user.get_full_name().strip() or request.user.username,
+                "avatar_url": "",
+            },
+        )
+
 
         invite.accepted_at = timezone.now()
         invite.save(update_fields=["accepted_at"])
