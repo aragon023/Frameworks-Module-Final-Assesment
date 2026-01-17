@@ -1,8 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Task, Member, Category, Pet
-from core.models import Household
-
+from .models import Task, Member, Category, Pet, Household, HouseholdInvite
 
 User = get_user_model()
 
@@ -233,3 +231,11 @@ class CurrentUserSerializer(serializers.ModelSerializer):
                 "name": obj.household.name,
             }
         return None
+
+class HouseholdInviteCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HouseholdInvite
+        fields = ["id", "email", "role"]
+
+class HouseholdInviteAcceptSerializer(serializers.Serializer):
+    token = serializers.UUIDField()

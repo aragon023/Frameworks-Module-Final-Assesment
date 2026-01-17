@@ -1,4 +1,8 @@
 from django.db import models
+import uuid
+from django.utils import timezone
+from datetime import timedelta
+
 
 class Household(models.Model):
     name = models.CharField(max_length=120)
@@ -61,3 +65,29 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+    
+
+def invite_expiry_default():
+       return timezone.now() + timedelta(days=7)
+
+class HouseholdInvite(models.Model):
+    ROLE_CHOICES = [
+        ("admin", "Admin"),
+        ("adult", "Adult"),
+        ("child", "Child"),
+    ]
+    household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name="invites")
+    email = models.EmailField()
+    role = models.CharField(max_length=16, choices=ROLE_CHOICES, default="adult")
+
+    token = models.UUIDField(default=uuid.uuid4, unique=True, db_index=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(default=invite_expiry_default)
+    accepted_at = models.DateTimeField(null=True, blank=True)
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    def __str__(self):
+        return f"Invite {self.email} -> {self.household.name}"

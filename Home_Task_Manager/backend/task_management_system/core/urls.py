@@ -13,7 +13,9 @@ from .views import (
     MeView,
     ChangePasswordView,
     GoogleAuthView,
-    CalendarTasksView
+    CalendarTasksView,
+    HouseholdInviteCreateView,
+    HouseholdInviteAcceptView,
 )
 
 router = DefaultRouter()
@@ -33,4 +35,7 @@ urlpatterns = [
     path("", include(router.urls)),
     path("auth/google/", GoogleAuthView.as_view(), name="auth-google"),
     path("calendar/tasks/", CalendarTasksView.as_view(), name="calendar-tasks"),
+    path("household/invites/", HouseholdInviteCreateView.as_view(), name="household-invite-create"),
+    path("household/invites/accept/", HouseholdInviteAcceptView.as_view(), name="household-invite-accept"),
+
 ]

@@ -27,7 +27,7 @@ from rest_framework.views import APIView
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
-from .models import Task, Member, Category, Pet, Household
+from .models import Task, Member, Category, Pet, Household, HouseholdInvite
 from .serializers import (
     TaskRowSerializer,
     MemberSerializer,
@@ -36,6 +36,8 @@ from .serializers import (
     PetSerializer,
     RegisterSerializer,
     CurrentUserSerializer,
+    HouseholdInviteCreateSerializer, 
+    HouseholdInviteAcceptSerializer,
 )
 
 User = get_user_model()
@@ -459,3 +461,63 @@ class ChangePasswordView(APIView):
         user.save()
 
         return Response({"detail": "Password updated successfully."})
+    
+class HouseholdInviteCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # v1: only admin can invite
+        if getattr(request.user, "role", "adult") != "admin":
+            return Response({"detail": "Not allowed."}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = HouseholdInviteCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        invite = HouseholdInvite.objects.create(
+            household=request.user.household,
+            email=serializer.validated_data["email"].lower().strip(),
+            role=serializer.validated_data["role"],
+        )
+
+        invite_link = f"{settings.FRONTEND_BASE_URL}/invite/accept?token={invite.token}"
+
+        # Send email using your existing email setup (Anymail + SendGrid)
+        from django.core.mail import send_mail
+
+        send_mail(
+            subject="You’ve been invited to join a household",
+            message=f"Accept your invite here: {invite_link}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[invite.email],
+            fail_silently=False,
+        )
+
+        return Response({"detail": "Invite sent."}, status=status.HTTP_201_CREATED)
+    
+class HouseholdInviteAcceptView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = HouseholdInviteAcceptSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        token = serializer.validated_data["token"]
+
+        try:
+            invite = HouseholdInvite.objects.get(token=token, accepted_at__isnull=True)
+        except HouseholdInvite.DoesNotExist:
+            return Response({"detail": "Invalid invite."}, status=status.HTTP_404_NOT_FOUND)
+
+        if invite.is_expired():
+            return Response({"detail": "Invite expired."}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.user.household = invite.household
+        request.user.role = invite.role
+        request.user.save(update_fields=["household", "role"])
+
+        invite.accepted_at = timezone.now()
+        invite.save(update_fields=["accepted_at"])
+
+        return Response({"detail": "Invite accepted."}, status=status.HTTP_200_OK)
+
+

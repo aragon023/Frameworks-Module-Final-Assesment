@@ -160,6 +160,5 @@ ANYMAIL_IGNORE_UNSUPPORTED_FEATURES = False
 
 FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:5173")
 
-
 # Google OAuth
 GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
