@@ -16,6 +16,7 @@ from .views import (
     CalendarTasksView,
     HouseholdInviteCreateView,
     HouseholdInviteAcceptView,
+    HouseholdUserRoleUpdateView,
 )
 
 router = DefaultRouter()
@@ -37,5 +38,5 @@ urlpatterns = [
     path("calendar/tasks/", CalendarTasksView.as_view(), name="calendar-tasks"),
     path("household/invites/", HouseholdInviteCreateView.as_view(), name="household-invite-create"),
     path("household/invites/accept/", HouseholdInviteAcceptView.as_view(), name="household-invite-accept"),
-
+    path("household/users/<int:user_id>/role/", HouseholdUserRoleUpdateView.as_view(), name="household-user-role-update"),
 ]

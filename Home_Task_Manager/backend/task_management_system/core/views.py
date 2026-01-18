@@ -14,7 +14,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 
-from .permissions import IsNotChild
+from .permissions import IsNotChild, IsAdmin
 
 from .utils import send_password_reset_email
 
@@ -562,5 +562,24 @@ class HouseholdInviteAcceptView(APIView):
         invite.save(update_fields=["accepted_at"])
 
         return Response({"detail": "Invite accepted."}, status=status.HTTP_200_OK)
+    
+    class HouseholdUserRoleUpdateView(APIView):
+        permission_classes = [IsAuthenticated, IsAdmin]
+
+        def patch(self, request, user_id: int):
+            role = request.data.get("role")
+
+            if role not in ["admin", "adult", "child"]:
+                return Response({"detail": "Invalid role."}, status=status.HTTP_400_BAD_REQUEST)
+
+            user = User.objects.filter(id=user_id, household=request.user.household).first()
+            if not user:
+                return Response({"detail": "User not found in your household."}, status=status.HTTP_404_NOT_FOUND)
+
+            user.role = role
+            user.save(update_fields=["role"])
+
+            return Response({"detail": "Role updated successfully.", "role": user.role})
+
 
 
