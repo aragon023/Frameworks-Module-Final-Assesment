@@ -14,7 +14,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 
-
+from .permissions import IsNotChild
 
 from .utils import send_password_reset_email
 
@@ -45,7 +45,8 @@ password_reset_token = PasswordResetTokenGenerator()
 
 
 class DashboardView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsNotChild]
+
 
     def get(self, request):
         qs = Task.objects.filter(household=request.user.household)
