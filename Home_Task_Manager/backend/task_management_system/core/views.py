@@ -116,7 +116,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     Household is ALWAYS inferred from the authenticated user.
     """
     serializer_class = TaskSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsNotChild]
 
     def get_queryset(self):
         # Always scope to user's household
