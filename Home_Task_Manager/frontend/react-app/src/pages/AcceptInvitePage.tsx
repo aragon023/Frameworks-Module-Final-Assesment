@@ -23,8 +23,15 @@ export default function AcceptInvitePage() {
       setMessage("Missing invite token.");
       return;
     }
-  }, [token]);
 
+    // not logged in -> go login
+    const access = localStorage.getItem("access");
+    if (!access) {
+     navigate(`/login?next=/invite/accept?token=${token}`);
+     return;
+   }
+ }, [token, navigate]);
+  
   async function acceptInvite() {
     if (!token) return;
 
