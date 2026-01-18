@@ -1,88 +1,133 @@
 import { useState } from "react";
+import { Container, Row, Col, Card, Form, Button, Alert } from "react-bootstrap";
+import DashboardLayout from "../layouts/DashboardLayout";
+import { getAuthHeaders } from "../api/auth";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api";
+const API_BASE = import.meta.env.VITE_API_BASE as string;
 
 export default function HouseholdInvitesPage() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"adult" | "child" | "admin">("adult");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
 
   async function sendInvite(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setMessage(null);
-    setError(null);
+    setSuccessMsg(null);
+    setErrorMsg(null);
+    setInviteLink(null);
 
     try {
-      const access = localStorage.getItem("access");
       const res = await fetch(`${API_BASE}/household/invites/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${access}`,
+          ...getAuthHeaders(),
         },
-        body: JSON.stringify({ email, role }),
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          role,
+        }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data?.detail || "Failed to send invite.");
+        setErrorMsg(data?.detail || "Failed to send invite.");
         return;
       }
 
-      setMessage(`Invite created ✅ Link: ${data.invite_link}`);
+      setSuccessMsg("Invite created successfully!");
+      setInviteLink(data.invite_link || null);
       setEmail("");
       setRole("adult");
     } catch {
-      setError("Network error. Please try again.");
+      setErrorMsg("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
+  async function copyInviteLink() {
+  if (!inviteLink) return;
+  await navigator.clipboard.writeText(inviteLink);
+  setSuccessMsg("Invite link copied ✅");
+}
+
   return (
-    <div className="container py-4" style={{ maxWidth: 520 }}>
-      <h2 className="mb-3">Invite Household Member</h2>
-      <p className="text-muted mb-4">
-        Send an invite link by email. Only admins can invite members.
-      </p>
+    <DashboardLayout>
+      <Container className="py-4">
+        <Row className="mb-4 align-items-center">
+          <Col>
+            <h2 className="fw-bold mb-0">Invite Members</h2>
+            <div className="text-muted">
+              Only admins can invite new household members.
+            </div>
+          </Col>
+        </Row>
 
-      <form onSubmit={sendInvite} className="card p-3">
-        <div className="mb-3">
-          <label className="form-label">Email</label>
-          <input
-            className="form-control"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@example.com"
-            required
-          />
-        </div>
+        <Row>
+          <Col md={6}>
+            <Card className="shadow-sm">
+              <Card.Body>
+                <Card.Title className="fs-5 mb-3">Send Invite</Card.Title>
 
-        <div className="mb-3">
-          <label className="form-label">Role</label>
-          <select
-            className="form-select"
-            value={role}
-            onChange={(e) => setRole(e.target.value as any)}
-          >
-            <option value="adult">Adult</option>
-            <option value="child">Child</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
+                {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
+                {successMsg && <Alert variant="success">{successMsg}</Alert>}
 
-        {message && <div className="alert alert-success py-2">{message}</div>}
-        {error && <div className="alert alert-danger py-2">{error}</div>}
+                <Form onSubmit={sendInvite}>
+                  <Form.Group className="mb-3">
+                    <Form.Label className="small text-muted">Email</Form.Label>
+                    <Form.Control
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@example.com"
+                      required
+                      disabled={loading}
+                    />
+                  </Form.Group>
 
-        <button className="btn btn-primary w-100" type="submit" disabled={loading}>
-          {loading ? "Sending..." : "Send Invite"}
-        </button>
-      </form>
-    </div>
+                  <Form.Group className="mb-3">
+                    <Form.Label className="small text-muted">Role</Form.Label>
+                    <Form.Select
+                      value={role}
+                      onChange={(e) => setRole(e.target.value as any)}
+                      disabled={loading}
+                    >
+                      <option value="adult">Adult</option>
+                      <option value="child">Child</option>
+                      <option value="admin">Admin</option>
+                    </Form.Select>
+                  </Form.Group>
+
+                  <Button type="submit" variant="success" className="w-100" disabled={loading}>
+                    {loading ? "Sending..." : "Send Invite"}
+                  </Button>
+                </Form>
+
+                {inviteLink && (
+                    <div className="mt-3">
+                        <div className="small text-muted mb-1">Invite link:</div>
+
+                        <div className="d-flex gap-2">
+                        <Form.Control value={inviteLink} readOnly />
+                        <Button variant="outline-primary" onClick={copyInviteLink}>
+                            Copy
+                        </Button>
+                        </div>
+                    </div>
+                    )}
+
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
+    </DashboardLayout>
   );
 }

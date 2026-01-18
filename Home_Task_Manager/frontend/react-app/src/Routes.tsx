@@ -102,7 +102,15 @@ export default function AppRoutes() {
           }
         />
 
-        <Route path="/invite/accept" element={<AcceptInvitePage />} />
+        <Route
+          path="/invite/accept"
+          element={
+            <RequireAuth>
+              <AcceptInvitePage />
+            </RequireAuth>
+          }
+        />
+
 
       </Routes>
     </BrowserRouter>

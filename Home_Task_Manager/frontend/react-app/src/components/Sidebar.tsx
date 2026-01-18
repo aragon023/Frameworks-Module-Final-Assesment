@@ -1,6 +1,7 @@
 import { Offcanvas, Nav, ListGroup, Spinner } from "react-bootstrap";
 import { NavLink } from "react-router-dom";
 import { useMembers } from "../hooks/useMembers";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 
 type SidebarProps = {
   show: boolean;
@@ -9,6 +10,11 @@ type SidebarProps = {
 
 export default function Sidebar({ show, onHide }: SidebarProps) {
   const { data, isLoading, error } = useMembers();
+  const { userQuery } = useCurrentUser();
+  const householdName = userQuery.data?.household?.name || "Household";
+  const roleLabel = userQuery.data?.role || "";
+
+
 
 
   return (
@@ -26,7 +32,12 @@ export default function Sidebar({ show, onHide }: SidebarProps) {
       <Offcanvas.Body>
         <div className="mb-4">
           <div className="text-muted small">Household</div>
-          <div className="fw-semibold">Aragon Family</div>
+          <div className="fw-semibold">{householdName}</div>
+          {roleLabel && (
+          <div className="text-muted small">
+            Role: <span className="fw-semibold text-uppercase">{roleLabel}</span>
+          </div>
+        )}
         </div>
 
         <Nav className="flex-column gap-2 mb-4">

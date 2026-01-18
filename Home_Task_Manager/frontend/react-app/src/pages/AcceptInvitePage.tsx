@@ -1,70 +1,100 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Container, Card, Button, Alert, Spinner } from "react-bootstrap";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { getAuthHeaders } from "../api/auth";
+import DashboardLayout from "../layouts/DashboardLayout";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000/api";
+
+const API_BASE = import.meta.env.VITE_API_BASE as string;
 
 export default function AcceptInvitePage() {
   const [params] = useSearchParams();
-  const token = params.get("token");
-
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-  const [message, setMessage] = useState("Accepting invite...");
-
   const navigate = useNavigate();
 
+  const token = params.get("token");
+
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState<string>("");
+
   useEffect(() => {
-    async function accept() {
-      if (!token) {
-        setStatus("error");
-        setMessage("Missing invite token.");
-        return;
-      }
-
-      const access = localStorage.getItem("access");
-      if (!access) {
-        // not logged in → send to login + come back here after
-        navigate(`/login?next=/invite/accept?token=${token}`);
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API_BASE}/household/invites/accept/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${access}`,
-          },
-          body: JSON.stringify({ token }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          setStatus("error");
-          setMessage(data?.detail || "Failed to accept invite.");
-          return;
-        }
-
-        setStatus("success");
-        setMessage("Invite accepted! Redirecting...");
-
-        setTimeout(() => navigate("/"), 800);
-      } catch {
-        setStatus("error");
-        setMessage("Network error accepting invite.");
-      }
+    // no token in URL
+    if (!token) {
+      setStatus("error");
+      setMessage("Missing invite token.");
+      return;
     }
+  }, [token]);
 
-    accept();
-  }, [token, navigate]);
+  async function acceptInvite() {
+    if (!token) return;
+
+    setStatus("loading");
+    setMessage("");
+
+    try {
+      const res = await fetch(`${API_BASE}/household/invites/accept/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ token }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setStatus("error");
+        setMessage(data.detail || "Failed to accept invite.");
+        return;
+      }
+
+      setStatus("success");
+      setMessage("Invite accepted! Redirecting to dashboard…");
+
+      setTimeout(() => navigate("/"), 800);
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+      setMessage("Network error. Please try again.");
+    }
+  }
 
   return (
-    <div className="container py-5" style={{ maxWidth: 600 }}>
-      <h2 className="mb-3">Household Invite</h2>
+    <DashboardLayout>
+      <Container className="py-4">
+        <Card className="shadow-sm" style={{ maxWidth: 520 }}>
+          <Card.Body>
+            <h4 className="fw-bold mb-2">Accept household invite</h4>
+            <p className="text-muted mb-3">
+              You’re about to join a household. Click below to accept.
+            </p>
 
-      {status === "loading" && <div className="alert alert-info">{message}</div>}
-      {status === "success" && <div className="alert alert-success">{message}</div>}
-      {status === "error" && <div className="alert alert-danger">{message}</div>}
-    </div>
+            {status === "error" && <Alert variant="danger">{message}</Alert>}
+            {status === "success" && <Alert variant="success">{message}</Alert>}
+
+            <div className="d-grid gap-2">
+              <Button
+                variant="success"
+                onClick={acceptInvite}
+                disabled={!token || status === "loading"}
+              >
+                {status === "loading" ? (
+                  <>
+                    <Spinner size="sm" className="me-2" /> Accepting…
+                  </>
+                ) : (
+                  "Accept invite"
+                )}
+              </Button>
+
+              <Link to="/" className="btn btn-outline-secondary">
+                Back to dashboard
+              </Link>
+            </div>
+          </Card.Body>
+        </Card>
+      </Container>
+    </DashboardLayout>
   );
 }

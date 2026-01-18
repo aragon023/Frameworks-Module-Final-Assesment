@@ -223,6 +223,7 @@ class CurrentUserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "household",
+            "role"
         ]
         read_only_fields = ["id"]
 
