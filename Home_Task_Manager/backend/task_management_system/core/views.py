@@ -262,13 +262,20 @@ class GoogleAuthView(APIView):
             # Create user with safe defaults.
             user = User.objects.create(
                 email=email,
-                username=email,  
+                username=email,
                 first_name=given_name,
                 last_name=family_name,
                 household=household,
                 role="admin",
+                auth_provider="google",
             )
+
         else:
+            # Existing user: ensure provider is set correctly
+            if getattr(user, "auth_provider", "") != "google":
+                user.auth_provider = "google"
+                user.save(update_fields=["auth_provider"])
+
             # Safety: if an old user somehow has no household, create one.
             if getattr(user, "household_id", None) is None:
                 household_name = f"{full_name}'s Household" if full_name else f"{email}'s Household"
@@ -296,7 +303,7 @@ class GoogleAuthView(APIView):
                 },
             )
 
-        # 4) Issue SimpleJWT tokens (same as /api/token/)
+        # 4) Issue SimpleJWT tokens
         refresh = RefreshToken.for_user(user)
         return Response(
             {
@@ -372,7 +379,7 @@ class PasswordResetRequestView(APIView):
             # Do NOT reveal existence of emails
             return Response({"detail": "If this email exists, a reset link will be sent."})
 
-        # This now handles uid, token, reset_url, and sending the email
+        # This handles uid, token, reset_url, and sending the email
         send_password_reset_email(user)
 
         return Response({"detail": "If this email exists, a reset link will be sent."})
@@ -563,23 +570,23 @@ class HouseholdInviteAcceptView(APIView):
 
         return Response({"detail": "Invite accepted."}, status=status.HTTP_200_OK)
     
-    class HouseholdUserRoleUpdateView(APIView):
-        permission_classes = [IsAuthenticated, IsAdmin]
+class HouseholdUserRoleUpdateView(APIView):
+    permission_classes = [IsAuthenticated, IsAdmin]
 
-        def patch(self, request, user_id: int):
-            role = request.data.get("role")
+    def patch(self, request, user_id: int):
+        role = request.data.get("role")
 
-            if role not in ["admin", "adult", "child"]:
-                return Response({"detail": "Invalid role."}, status=status.HTTP_400_BAD_REQUEST)
+        if role not in ["admin", "adult", "child"]:
+            return Response({"detail": "Invalid role."}, status=status.HTTP_400_BAD_REQUEST)
 
-            user = User.objects.filter(id=user_id, household=request.user.household).first()
-            if not user:
-                return Response({"detail": "User not found in your household."}, status=status.HTTP_404_NOT_FOUND)
+        user = User.objects.filter(id=user_id, household=request.user.household).first()
+        if not user:
+            return Response({"detail": "User not found in your household."}, status=status.HTTP_404_NOT_FOUND)
 
-            user.role = role
-            user.save(update_fields=["role"])
+        user.role = role
+        user.save(update_fields=["role"])
 
-            return Response({"detail": "Role updated successfully.", "role": user.role})
+        return Response({"detail": "Role updated successfully.", "role": user.role})
 
 
 

@@ -211,8 +211,14 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return user
 
+class HouseholdSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Household
+        fields = ["id", "name"]
+
 class CurrentUserSerializer(serializers.ModelSerializer):
-    household = serializers.SerializerMethodField()
+    household = HouseholdSerializer(read_only=True)
+    auth_provider = serializers.CharField(read_only=True)
 
     class Meta:
         model = User
@@ -222,18 +228,11 @@ class CurrentUserSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
+            "role",
             "household",
-            "role"
+            "auth_provider",
         ]
-        read_only_fields = ["id"]
 
-    def get_household(self, obj):
-        if obj.household:
-            return {
-                "id": obj.household.id,
-                "name": obj.household.name,
-            }
-        return None
 
 class HouseholdInviteCreateSerializer(serializers.ModelSerializer):
     class Meta:

@@ -118,10 +118,19 @@ const ProfilePage: React.FC = () => {
     (user.first_name && user.first_name.trim()) ||
     (user.username && user.username.trim()) ||
     "";
+
   const displayName =
     rawName.length > 0
       ? rawName.charAt(0).toUpperCase() + rawName.slice(1)
       : "there";
+
+  // ✅ Real solution: backend tells us auth_provider
+  const isGoogleUser = user.auth_provider === "google";
+
+  // Debug logs (you can keep temporarily)
+  console.log("PROFILE USER:", user);
+  console.log("AUTH PROVIDER:", user?.auth_provider);
+  console.log("isGoogleUser?", isGoogleUser);
 
   return (
     <DashboardLayout>
@@ -132,6 +141,15 @@ const ProfilePage: React.FC = () => {
             <p className="text-muted mb-0">
               Manage your account details and update your password.
             </p>
+          </Col>
+        </Row>
+
+        {/* Optional debug UI (remove later if you want) */}
+        <Row className="mb-3">
+          <Col>
+            <Alert variant="warning" className="py-2 mb-0">
+              auth_provider: <strong>{user.auth_provider ?? "undefined"}</strong>
+            </Alert>
           </Col>
         </Row>
 
@@ -199,7 +217,7 @@ const ProfilePage: React.FC = () => {
                   <div className="d-flex justify-content-end mt-3">
                     <Button
                       type="submit"
-                      variant="success" 
+                      variant="success"
                       disabled={updateUser.isPending}
                     >
                       {updateUser.isPending ? "Saving..." : "Save changes"}
@@ -218,6 +236,14 @@ const ProfilePage: React.FC = () => {
                   Change password
                 </Card.Title>
 
+                {isGoogleUser && (
+                  <Alert variant="info" className="mb-3">
+                    You&apos;re logged in with your <strong>Google account</strong>.
+                    <br />
+                    Password changes must be managed through Google.
+                  </Alert>
+                )}
+
                 <Form onSubmit={handlePasswordSubmit}>
                   <Form.Group className="mb-3" controlId="oldPassword">
                     <Form.Label>Current password</Form.Label>
@@ -225,8 +251,13 @@ const ProfilePage: React.FC = () => {
                       type="password"
                       value={oldPassword}
                       onChange={(e) => setOldPassword(e.target.value)}
-                      placeholder="Enter current password"
-                      required
+                      placeholder={
+                        isGoogleUser
+                          ? "Not available for Google login"
+                          : "Enter current password"
+                      }
+                      required={!isGoogleUser}
+                      disabled={isGoogleUser}
                     />
                   </Form.Group>
 
@@ -236,17 +267,23 @@ const ProfilePage: React.FC = () => {
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="At least 8 characters"
-                      required
+                      placeholder={
+                        isGoogleUser
+                          ? "Not available for Google login"
+                          : "At least 8 characters"
+                      }
+                      required={!isGoogleUser}
+                      disabled={isGoogleUser}
                     />
                   </Form.Group>
 
-                  {passwordError && (
+                  {!isGoogleUser && passwordError && (
                     <Alert variant="danger" className="mt-2">
                       {passwordError}
                     </Alert>
                   )}
-                  {passwordMessage && (
+
+                  {!isGoogleUser && passwordMessage && (
                     <Alert variant="success" className="mt-2">
                       {passwordMessage}
                     </Alert>
@@ -255,8 +292,8 @@ const ProfilePage: React.FC = () => {
                   <div className="d-flex justify-content-end mt-3">
                     <Button
                       type="submit"
-                      variant="success" 
-                      disabled={changePassword.isPending}
+                      variant="success"
+                      disabled={isGoogleUser || changePassword.isPending}
                     >
                       {changePassword.isPending ? "Updating..." : "Update password"}
                     </Button>

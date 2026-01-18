@@ -9,6 +9,11 @@ class User(AbstractUser):
         ("child", "Child"),
     ]
 
+    AUTH_PROVIDER_CHOICES = [
+        ("password", "Password"),
+        ("google", "Google"),
+    ]
+
     household = models.ForeignKey(
         Household,
         on_delete=models.CASCADE,
@@ -21,4 +26,10 @@ class User(AbstractUser):
         max_length=16,
         choices=ROLE_CHOICES,
         default="adult",
+    )
+
+    auth_provider = models.CharField(
+        max_length=20,
+        choices=AUTH_PROVIDER_CHOICES,
+        default="password",
     )

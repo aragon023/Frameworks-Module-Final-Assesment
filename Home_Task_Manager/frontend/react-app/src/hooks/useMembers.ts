@@ -7,6 +7,7 @@ export type Member = {
   id: number;
   name: string;
   avatar_url?: string | null;
+  role?: "admin" | "adult" | "child";
 };
 
 // READ

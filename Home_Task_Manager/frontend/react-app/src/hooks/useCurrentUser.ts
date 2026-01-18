@@ -9,12 +9,11 @@ export type CurrentUser = {
   email: string;
   first_name: string;
   last_name: string;
-  role: "admin" | "adult" | "child";
-  household?: {
-    id: number;
-    name: string;
-  };
+  role?: string;
+  auth_provider: "password" | "google";
+  household?: { id: number; name: string };
 };
+
 
 
 export function useCurrentUser() {

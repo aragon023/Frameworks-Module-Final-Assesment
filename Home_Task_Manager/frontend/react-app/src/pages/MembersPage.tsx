@@ -18,17 +18,28 @@ import {
 } from "../hooks/useMembers";
 import type { Member } from "../hooks/useMembers";
 
+import { useCurrentUser } from "../hooks/useCurrentUser";
+import { useUpdateHouseholdUserRole } from "../hooks/useHouseholdUsers";
+
 export default function MembersPage() {
   const { data, isLoading, error } = useMembers();
   const createMember = useCreateMember();
   const updateMember = useUpdateMember();
   const deleteMember = useDeleteMember();
 
+  const { userQuery } = useCurrentUser();
+  const currentRole = userQuery.data?.role;
+
+  const updateRole = useUpdateHouseholdUserRole();
+
   const [newName, setNewName] = useState("");
   const [newAvatar, setNewAvatar] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingName, setEditingName] = useState("");
   const [editingAvatar, setEditingAvatar] = useState("");
+  const [editingRoleId, setEditingRoleId] = useState<number | null>(null);
+  const [editingRoleValue, setEditingRoleValue] = useState<"admin" | "adult" | "child">("adult");
+
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,6 +91,23 @@ export default function MembersPage() {
     if (!window.confirm(`Remove "${member.name}" from this household?`)) return;
     deleteMember.mutate(member.id);
   };
+
+  const startRoleEdit = (member: Member) => {
+    setEditingRoleId(member.id);
+    setEditingRoleValue((member.role as any) || "adult");
+  };
+
+  const saveRoleEdit = () => {
+    if (!editingRoleId) return;
+
+    updateRole.mutate({
+      user_id: editingRoleId,
+      role: editingRoleValue,
+    });
+
+    setEditingRoleId(null);
+  };
+
 
   return (
     <DashboardLayout>
@@ -153,6 +181,7 @@ export default function MembersPage() {
                         key={m.id}
                         className="d-flex align-items-center justify-content-between gap-2"
                       >
+
                         <div className="d-flex align-items-center gap-2 flex-grow-1">
                           {m.avatar_url ? (
                             <img
@@ -185,26 +214,79 @@ export default function MembersPage() {
                                 />
                                 <Form.Control
                                   value={editingAvatar}
-                                  onChange={(e) =>
-                                    setEditingAvatar(e.target.value)
-                                  }
+                                  onChange={(e) => setEditingAvatar(e.target.value)}
                                   size="sm"
                                   placeholder="Avatar URL"
                                 />
                               </>
                             ) : (
                               <>
-                                <div>{m.name}</div>
+                                <div className="d-flex align-items-center gap-2">
+                                  <div>{m.name}</div>
+
+                                  {/* Role badge */}
+                                  {m.role && (
+                                    <span className="badge bg-secondary text-uppercase">
+                                      {m.role}
+                                    </span>
+                                  )}
+                                </div>
+
                                 {m.avatar_url && (
-                                  <div className="small text-muted">
-                                    Avatar set
+                                  <div className="small text-muted">Avatar set</div>
+                                )}
+
+                                {/* Admin-only role editor */}
+                                {currentRole === "admin" && (
+                                  <div className="mt-2">
+                                    {editingRoleId === m.id ? (
+                                      <div className="d-flex gap-2 align-items-center">
+                                        <Form.Select
+                                          size="sm"
+                                          value={editingRoleValue}
+                                          onChange={(e) =>
+                                            setEditingRoleValue(e.target.value as any)
+                                          }
+                                          style={{ maxWidth: 140 }}
+                                        >
+                                          <option value="admin">Admin</option>
+                                          <option value="adult">Adult</option>
+                                          <option value="child">Child</option>
+                                        </Form.Select>
+
+                                        <Button
+                                          size="sm"
+                                          variant="success"
+                                          onClick={saveRoleEdit}
+                                          disabled={updateRole.isPending}
+                                        >
+                                          Save
+                                        </Button>
+
+                                        <Button
+                                          size="sm"
+                                          variant="outline-secondary"
+                                          onClick={() => setEditingRoleId(null)}
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        variant="outline-dark"
+                                        onClick={() => startRoleEdit(m)}
+                                      >
+                                        Edit Role
+                                      </Button>
+                                    )}
                                   </div>
                                 )}
                               </>
                             )}
                           </div>
-                        </div>
-
+                        </div>        
+                        
                         <div className="d-flex gap-2">
                           {editingId === m.id ? (
                             <>
