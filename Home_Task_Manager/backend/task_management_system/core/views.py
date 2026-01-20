@@ -564,14 +564,20 @@ class HouseholdInviteAcceptView(APIView):
         request.user.role = invite.role
         request.user.save(update_fields=["household", "role"])
 
-        Member.objects.get_or_create(
-            household=invite.household,
-            user=request.user,
-            defaults={
-                "name": request.user.get_full_name().strip() or request.user.username,
-                "avatar_url": "",
-            },
-        )
+        member_name = request.user.get_full_name().strip() or request.user.username
+        existing_member = Member.objects.filter(user=request.user).first()
+        if existing_member:
+            existing_member.household = invite.household
+            if member_name:
+                existing_member.name = member_name
+            existing_member.save(update_fields=["household", "name"])
+        else:
+            Member.objects.create(
+                household=invite.household,
+                user=request.user,
+                name=member_name,
+                avatar_url="",
+            )
 
 
         invite.accepted_at = timezone.now()
