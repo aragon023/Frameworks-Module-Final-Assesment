@@ -97,10 +97,12 @@ export default function Sidebar({ show, onHide }: SidebarProps) {
           >
             📅 Calendar
           </Nav.Link>
-
-          {/* Future features (not wired yet) */}
-          <Nav.Link className="btn btn-light text-start">
-            ⭐ Rewards
+          <Nav.Link
+            as={NavLink}
+            to="/rewards"
+            className="btn btn-light text-start"
+          >
+            Rewards
           </Nav.Link>
 
           {/* Profile page */}

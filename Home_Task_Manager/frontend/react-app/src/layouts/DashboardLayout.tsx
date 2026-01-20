@@ -72,6 +72,10 @@ export default function DashboardLayout({ children }: Props) {
                 📅 Calendar
               </NavLink>
 
+              <NavLink to="/rewards" className={navLinkClass}>
+                Rewards
+              </NavLink>
+
               <NavLink to="/members" className={navLinkClass}>
                 👨‍👩‍👧 Family
               </NavLink>

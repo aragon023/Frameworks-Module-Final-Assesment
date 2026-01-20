@@ -27,7 +27,7 @@ from rest_framework.views import APIView
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
-from .models import Task, Member, Category, Pet, Household, HouseholdInvite
+from .models import Task, Member, Category, Pet, Household, HouseholdInvite, RewardRedemption
 from .serializers import (
     TaskRowSerializer,
     MemberSerializer,
@@ -38,6 +38,7 @@ from .serializers import (
     CurrentUserSerializer,
     HouseholdInviteCreateSerializer, 
     HouseholdInviteAcceptSerializer,
+    RewardRedeemSerializer,
 )
 
 User = get_user_model()
@@ -167,6 +168,14 @@ class TaskViewSet(viewsets.ModelViewSet):
         """
         was_completed = serializer.instance.completed
         obj = serializer.save()
+
+        if was_completed != obj.completed:
+            points_delta = 10 if obj.completed else -10
+            user = self.request.user
+            new_balance = max(0, user.points_balance + points_delta)
+            if new_balance != user.points_balance:
+                user.points_balance = new_balance
+                user.save(update_fields=["points_balance"])
 
         if not was_completed and obj.completed and obj.completed_at is None:
             obj.completed_at = timezone.now()
@@ -587,6 +596,70 @@ class HouseholdUserRoleUpdateView(APIView):
         user.save(update_fields=["role"])
 
         return Response({"detail": "Role updated successfully.", "role": user.role})
+
+
+class RewardsSummaryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        household = getattr(user, "household", None)
+        if household is None:
+            return Response({"detail": "User is not associated with a household."}, status=status.HTTP_400_BAD_REQUEST)
+
+        users = User.objects.filter(household=household).order_by("-points_balance", "id")
+        leaderboard = []
+        for member in users:
+            name = member.get_full_name().strip() or member.username
+            leaderboard.append(
+                {
+                    "id": member.id,
+                    "name": name,
+                    "points": member.points_balance,
+                    "role": member.role,
+                }
+            )
+
+        household_total_points = sum(m.points_balance for m in users)
+
+        return Response(
+            {
+                "my_points": user.points_balance,
+                "household_total_points": household_total_points,
+                "leaderboard": leaderboard,
+            }
+        )
+
+
+class RewardsRedeemView(APIView):
+    permission_classes = [IsAuthenticated, IsNotChild]
+
+    def post(self, request):
+        serializer = RewardRedeemSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        household = getattr(user, "household", None)
+        if household is None:
+            return Response({"detail": "User is not associated with a household."}, status=status.HTTP_400_BAD_REQUEST)
+
+        points = serializer.validated_data["points"]
+        note = serializer.validated_data.get("note", "").strip()
+
+        if user.points_balance < points:
+            return Response({"detail": "Not enough points."}, status=status.HTTP_400_BAD_REQUEST)
+
+        RewardRedemption.objects.create(
+            household=household,
+            user=user,
+            points_redeemed=points,
+            note=note,
+        )
+
+        user.points_balance = max(0, user.points_balance - points)
+        user.save(update_fields=["points_balance"])
+
+        return Response({"detail": "Rewards redeemed.", "new_balance": user.points_balance})
 
 
 

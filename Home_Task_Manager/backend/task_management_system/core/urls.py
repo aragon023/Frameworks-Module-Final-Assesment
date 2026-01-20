@@ -17,6 +17,8 @@ from .views import (
     HouseholdInviteCreateView,
     HouseholdInviteAcceptView,
     HouseholdUserRoleUpdateView,
+    RewardsSummaryView,
+    RewardsRedeemView,
 )
 
 router = DefaultRouter()
@@ -36,6 +38,8 @@ urlpatterns = [
     path("", include(router.urls)),
     path("auth/google/", GoogleAuthView.as_view(), name="auth-google"),
     path("calendar/tasks/", CalendarTasksView.as_view(), name="calendar-tasks"),
+    path("rewards/summary/", RewardsSummaryView.as_view(), name="rewards-summary"),
+    path("rewards/redeem/", RewardsRedeemView.as_view(), name="rewards-redeem"),
     path("household/invites/", HouseholdInviteCreateView.as_view(), name="household-invite-create"),
     path("household/invites/accept/", HouseholdInviteAcceptView.as_view(), name="household-invite-accept"),
     path("household/users/<int:user_id>/role/", HouseholdUserRoleUpdateView.as_view(), name="household-user-role-update"),

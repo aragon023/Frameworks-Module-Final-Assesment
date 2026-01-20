@@ -241,3 +241,8 @@ class HouseholdInviteCreateSerializer(serializers.ModelSerializer):
 
 class HouseholdInviteAcceptSerializer(serializers.Serializer):
     token = serializers.UUIDField()
+
+
+class RewardRedeemSerializer(serializers.Serializer):
+    points = serializers.IntegerField(min_value=1)
+    note = serializers.CharField(required=False, allow_blank=True)

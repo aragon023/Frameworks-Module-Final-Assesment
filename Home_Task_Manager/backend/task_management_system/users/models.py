@@ -33,3 +33,5 @@ class User(AbstractUser):
         choices=AUTH_PROVIDER_CHOICES,
         default="password",
     )
+
+    points_balance = models.IntegerField(default=0)

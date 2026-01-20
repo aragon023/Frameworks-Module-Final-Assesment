@@ -13,6 +13,7 @@ import ProfilePage from "./pages/ProfilePage";
 import CalendarPage from "./pages/CalendarPage";
 import HouseholdInvitesPage from "./pages/HouseholdInvitesPage";
 import AcceptInvitePage from "./pages/AcceptInvitePage";
+import RewardsPage from "./pages/RewardsPage";
 
 
 
@@ -89,6 +90,15 @@ export default function AppRoutes() {
           element={
             <RequireAuth>
               <CalendarPage />
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/rewards"
+          element={
+            <RequireAuth>
+              <RewardsPage />
             </RequireAuth>
           }
         />

@@ -72,6 +72,17 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class RewardRedemption(models.Model):
+    household = models.ForeignKey(Household, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    points_redeemed = models.IntegerField()
+    note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user_id} redeemed {self.points_redeemed}"
     
 
 def invite_expiry_default():
