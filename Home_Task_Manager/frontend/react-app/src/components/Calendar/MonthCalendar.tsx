@@ -46,6 +46,27 @@ function eachDayBetween(startISO: string, endISO: string): string[] {
 }
 
 /* ------------------ component ------------------ */
+function priorityStyles(priority?: string) {
+  if (priority === "high") {
+    return {
+      borderColor: "#dc3545",
+      background: "rgba(220,53,69,0.12)",
+      textColor: "#842029",
+    };
+  }
+  if (priority === "med") {
+    return {
+      borderColor: "#ffc107",
+      background: "rgba(255,193,7,0.18)",
+      textColor: "#664d03",
+    };
+  }
+  return {
+    borderColor: "#198754",
+    background: "rgba(25,135,84,0.12)",
+    textColor: "#0f5132",
+  };
+}
 
 export default function MonthCalendar() {
   const isMobile = window.innerWidth < 768;
@@ -136,10 +157,43 @@ export default function MonthCalendar() {
     <div style={{ padding: 16 }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-        <button onClick={prevMonth}>←</button>
-        <button onClick={goToToday}>Today</button>
+        <button
+          onClick={prevMonth}
+          style={{
+            borderRadius: 999,
+            background: "#198754",
+            border: "none",
+            color: "white",
+            padding: "6px 10px",
+          }}
+        >
+          ?
+        </button>
+        <button
+          onClick={goToToday}
+          style={{
+            borderRadius: 999,
+            background: "#198754",
+            border: "none",
+            color: "white",
+            padding: "6px 12px",
+          }}
+        >
+          Today
+        </button>
         <h2 style={{ margin: 0 }}>{monthLabel}</h2>
-        <button onClick={nextMonth}>→</button>
+        <button
+          onClick={nextMonth}
+          style={{
+            borderRadius: 999,
+            background: "#198754",
+            border: "none",
+            color: "white",
+            padding: "6px 10px",
+          }}
+        >
+          ?
+        </button>
         <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.7 }}>
           Range: {rangeStart} → {rangeEnd}
         </div>
@@ -226,6 +280,9 @@ export default function MonthCalendar() {
 
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {dayTasks.slice(0, 3).map((t) => (
+                  (() => {
+                    const styles = priorityStyles(t.priority);
+                    return (
                   <button
                     key={t.id}
                     type="button"
@@ -242,13 +299,14 @@ export default function MonthCalendar() {
                        fontSize: 12,
                        padding: "4px 6px",
                        borderRadius: 6,
-                       border: "1px solid rgba(0,0,0,0.10)",
+                       border: `1px solid ${styles.borderColor}`,
                        borderLeft: t.start_at
-                       ? "4px solid #0d6efd"     // scheduled
-                       : "4px dashed rgba(0,0,0,0.4)", // due-only
-                       background: t.completed
-                       ? "rgba(0,0,0,0.08)"
-                       : "rgba(0,0,0,0.03)",
+                       ? "4px solid #adb5bd"
+                       : "4px dashed #adb5bd",
+                       background: styles.background,
+                       color: styles.textColor,
+                       opacity: t.completed ? 0.7 : 1,
+                       textDecoration: t.completed ? "line-through" : "none",
                        overflow: "hidden",
                        textOverflow: "ellipsis",
                        whiteSpace: "nowrap",
@@ -258,6 +316,8 @@ export default function MonthCalendar() {
                   >
                     {t.title}
                   </button>
+                    );
+                  })()
                 ))}
 
                 {dayTasks.length > 3 && (

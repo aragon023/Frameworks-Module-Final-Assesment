@@ -73,7 +73,7 @@ export default function DashboardLayout({ children }: Props) {
               </NavLink>
 
               <NavLink to="/rewards" className={navLinkClass}>
-                Rewards
+                🏆 Rewards
               </NavLink>
 
               <NavLink to="/members" className={navLinkClass}>

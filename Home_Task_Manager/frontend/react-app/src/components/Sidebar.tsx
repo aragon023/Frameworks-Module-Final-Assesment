@@ -102,7 +102,7 @@ export default function Sidebar({ show, onHide }: SidebarProps) {
             to="/rewards"
             className="btn btn-light text-start"
           >
-            Rewards
+            🏆 Rewards
           </Nav.Link>
 
           {/* Profile page */}
