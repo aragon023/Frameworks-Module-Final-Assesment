@@ -160,19 +160,19 @@ export default function MonthCalendar() {
         <button
           onClick={prevMonth}
           style={{
-            borderRadius: 999,
+            borderRadius: 10,
             background: "#198754",
             border: "none",
             color: "white",
             padding: "6px 10px",
           }}
         >
-          ?
+          {"<"}
         </button>
         <button
           onClick={goToToday}
           style={{
-            borderRadius: 999,
+            borderRadius: 10,
             background: "#198754",
             border: "none",
             color: "white",
@@ -185,14 +185,14 @@ export default function MonthCalendar() {
         <button
           onClick={nextMonth}
           style={{
-            borderRadius: 999,
+            borderRadius: 10,
             background: "#198754",
             border: "none",
             color: "white",
             padding: "6px 10px",
           }}
         >
-          ?
+          {">"}
         </button>
         <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.7 }}>
           Range: {rangeStart} → {rangeEnd}
