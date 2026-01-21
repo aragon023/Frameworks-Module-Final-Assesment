@@ -58,13 +58,14 @@ export default function LoginPage() {
         body: JSON.stringify({ id_token: idToken }),
       });
 
+      const data = await res.json().catch(() => null);
+
       if (!res.ok) {
         setError("Google login failed. Please try again.");
         setLoading(false);
         return;
       }
 
-      const data = await res.json();
       localStorage.setItem("access", data.access);
       localStorage.setItem("refresh", data.refresh);
 
