@@ -81,10 +81,9 @@ export default function TasksPage() {
   const [category, setCategory] = useState("");
 
 
-  const members = useMembers(1);
-  const petsQuery = usePets(1);
+  const members = useMembers();
+  const petsQuery = usePets();
   const tasks = useTasks({
-    householdId: 1,
     search,
     completed: completed ? completed === "true" : undefined,
     priority: priority || undefined,
@@ -340,7 +339,6 @@ export default function TasksPage() {
           show={showModal}
           onHide={() => setShowModal(false)}
           initialTask={editingTask}
-          householdId={1}
         />
       </Container>
     </DashboardLayout>

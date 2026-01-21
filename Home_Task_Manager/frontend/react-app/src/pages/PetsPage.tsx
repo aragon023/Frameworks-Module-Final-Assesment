@@ -19,7 +19,7 @@ import {
 } from "../hooks/usePets";
 
 export default function PetsPage() {
-  const { data, isLoading, error } = usePets(1);
+  const { data, isLoading, error } = usePets();
   const createPet = useCreatePet();
   const updatePet = useUpdatePet();
   const deletePet = useDeletePet();
