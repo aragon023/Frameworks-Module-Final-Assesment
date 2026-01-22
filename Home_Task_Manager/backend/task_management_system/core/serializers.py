@@ -209,6 +209,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
 
+        # 3. Create a default member profile for the new user
+        Member.objects.create(
+            household=household,
+            user=user,
+            name=user.get_full_name().strip() or user.username,
+            avatar_url="",
+        )
+
         return user
 
 class HouseholdSerializer(serializers.ModelSerializer):
