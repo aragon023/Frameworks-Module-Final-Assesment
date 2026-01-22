@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Container, Row, Col, Card, Form, Button, Alert } from "react-bootstrap";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
+import logo from "../assets/Logo_Hometaskmanager.png";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000/api";
 
@@ -82,6 +83,13 @@ export default function LoginPage() {
     <Container className="d-flex justify-content-center align-items-center min-vh-100 bg-light">
       <Row className="w-100" style={{ maxWidth: 420 }}>
         <Col>
+          <div className="d-flex justify-content-center mb-3">
+            <img
+              src={logo}
+              alt="Home Task Manager"
+              style={{ height: 172 }}
+            />
+          </div>
           <Card className="shadow-sm">
             <Card.Body>
               <h3 className="fw-bold mb-3 text-center">Sign in</h3>
