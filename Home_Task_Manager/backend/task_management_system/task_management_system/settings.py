@@ -148,11 +148,11 @@ REST_FRAMEWORK = {
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Email / password reset configuration
-EMAIL_BACKEND = "anymail.backends.sendgrid.EmailBackend"
+EMAIL_BACKEND = "anymail.backends.mailersend.EmailBackend"
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 
 ANYMAIL = {
-    "SENDGRID_API_KEY": os.getenv("SENDGRID_API_KEY"),
+    "MAILERSEND_API_TOKEN": os.getenv("MAILERSEND_API_TOKEN"),
 }
 
 # Fail loudly during testing
