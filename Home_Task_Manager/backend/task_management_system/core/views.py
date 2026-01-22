@@ -20,6 +20,8 @@ from .utils import send_password_reset_email
 
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -425,6 +427,28 @@ class PasswordResetConfirmView(APIView):
         user.save()
 
         return Response({"detail": "Password has been reset successfully."})
+
+
+class TokenObtainPairWithMemberSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        user = self.user
+
+        if getattr(user, "household_id", None):
+            Member.objects.get_or_create(
+                household=user.household,
+                user=user,
+                defaults={
+                    "name": user.get_full_name().strip() or user.username,
+                    "avatar_url": "",
+                },
+            )
+
+        return data
+
+
+class TokenObtainPairWithMemberView(TokenObtainPairView):
+    serializer_class = TokenObtainPairWithMemberSerializer
 
 
 class MeView(APIView):
