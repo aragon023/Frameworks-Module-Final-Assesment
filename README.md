@@ -1,7 +1,7 @@
 # Home Task Manager
 
 Designed and Developed by: Mauricio Aragon Ramos  
-Course: UCD Full Stack Development � Frameworks (Final Assessment)  
+Course: UCD Full Stack Development - Frameworks (Final Assessment)
 
 Repository:
 https://github.com/aragon023/Frameworks-Module-Final-Assesment.git
@@ -23,9 +23,10 @@ Home Task Manager is a full-stack web application that helps families manage hou
 5. Frontend (React)
 6. Environment Variables
 7. Running the Project Locally
-8. Deployment Notes
-9. Security Considerations
-10. Future Improvements
+8. Tests
+9. Deployment Notes
+10. Security Considerations
+11. Future Improvements
 
 ---
 
@@ -66,30 +67,30 @@ Hosting & Database
 Frameworks-Module-Final-Assesment/
 +-- Home_Task_Manager/
     +-- backend/
-    �   +-- task_management_system/
-    �       +-- manage.py
-    �       +-- requirements.txt
-    �       +-- core/
-    �       �   +-- models.py
-    �       �   +-- serializers.py
-    �       �   +-- views.py
-    �       �   +-- urls.py
-    �       �   +-- utils.py
-    �       +-- task_management_system/
-    �           +-- settings.py
-    �           +-- urls.py
-    �           +-- wsgi.py
-    �           +-- asgi.py
+    |   +-- task_management_system/
+    |       +-- manage.py
+    |       +-- requirements.txt
+    |       +-- core/
+    |       |   +-- models.py
+    |       |   +-- serializers.py
+    |       |   +-- views.py
+    |       |   +-- urls.py
+    |       |   +-- utils.py
+    |       +-- task_management_system/
+    |           +-- settings.py
+    |           +-- urls.py
+    |           +-- wsgi.py
+    |           +-- asgi.py
     +-- frontend/
         +-- react-app/
             +-- src/
-            �   +-- App.tsx
-            �   +-- Routes.tsx
-            �   +-- layouts/
-            �   �   +-- DashboardLayout.tsx
-            �   +-- components/
-            �   +-- hooks/
-            �   +-- pages/
+            |   +-- App.tsx
+            |   +-- Routes.tsx
+            |   +-- layouts/
+            |   |   +-- DashboardLayout.tsx
+            |   +-- components/
+            |   +-- hooks/
+            |   +-- pages/
             +-- .env
             +-- vite.config.ts
 
@@ -102,17 +103,17 @@ Main URLconf: task_management_system/urls.py
 API base path: /api/
 
 Public endpoints:
-- POST /api/register/ � create a new user (also creates a default Member)
-- POST /api/token/ � obtain access & refresh tokens (also backfills Member on login if missing)
-- POST /api/token/refresh/ � refresh access token
-- POST /api/auth/google/ � Google OAuth login
-- POST /api/password-reset/ � request a password reset email
-- POST /api/password-reset-confirm/ � confirm reset (uid + token + new password)
+- POST /api/register/ - create a new user (also creates a default Member)
+- POST /api/token/ - obtain access & refresh tokens (also backfills Member on login if missing)
+- POST /api/token/refresh/ - refresh access token
+- POST /api/auth/google/ - Google OAuth login
+- POST /api/password-reset/ - request a password reset email
+- POST /api/password-reset-confirm/ - confirm reset (uid + token + new password)
 
 Authenticated endpoints (JWT required):
 - GET /api/dashboard/
 - CRUD: /api/tasks/, /api/categories/, /api/members/, /api/pets/
-- GET/PATCH /api/me/ � current user profile
+- GET/PATCH /api/me/ - current user profile
 - POST /api/change-password/
 
 Notes
@@ -199,7 +200,26 @@ Frontend URL: http://localhost:5173
 
 ---
 
-## 8. Deployment Notes (Render)
+## 8. Tests
+
+Backend tests (pytest)
+1) cd Home_Task_Manager/backend/task_management_system
+2) pytest
+
+Test modules include:
+- tests/test_google_auth.py
+- tests/test_rewards.py
+- tests/test_dashboard_auth.py
+- tests/test_auth_required.py
+- tests/test_household_isolation_bdd.py
+
+Note
+- Tests are configured via pytest.ini (pytest-django)
+- There are no frontend automated tests in this repository yet
+
+---
+
+## 9. Deployment Notes (Render)
 
 Backend Web Service
 - Build: pip install -r requirements.txt
@@ -216,6 +236,20 @@ Important
 
 ---
 
+## 10. Security Considerations
 
+- Django password hashing (raw passwords never stored)
+- JWT authentication
+- Password reset tokens are time-limited
+- Environment variables used for secrets
+- CORS enabled for development; tighten for production
 
 ---
+
+## 11. Future Improvements
+
+- Stronger permissions and roles
+- Invitation workflow enhancements
+- Calendar + rewards expansions
+- File uploads for avatars
+- Move JWT storage to HttpOnly cookies
