@@ -124,13 +124,9 @@ const ProfilePage: React.FC = () => {
       ? rawName.charAt(0).toUpperCase() + rawName.slice(1)
       : "there";
 
-  // ✅ Real solution: backend tells us auth_provider
   const isGoogleUser = user.auth_provider === "google";
 
   // Debug logs (you can keep temporarily)
-  console.log("PROFILE USER:", user);
-  console.log("AUTH PROVIDER:", user?.auth_provider);
-  console.log("isGoogleUser?", isGoogleUser);
 
   return (
     <DashboardLayout>
@@ -141,15 +137,6 @@ const ProfilePage: React.FC = () => {
             <p className="text-muted mb-0">
               Manage your account details and update your password.
             </p>
-          </Col>
-        </Row>
-
-        {/* Optional debug UI (remove later if you want) */}
-        <Row className="mb-3">
-          <Col>
-            <Alert variant="warning" className="py-2 mb-0">
-              auth_provider: <strong>{user.auth_provider ?? "undefined"}</strong>
-            </Alert>
           </Col>
         </Row>
 
