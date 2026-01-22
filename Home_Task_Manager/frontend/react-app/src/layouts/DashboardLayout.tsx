@@ -4,6 +4,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { useMembers } from "../hooks/useMembers";
 import { useCurrentUser } from "../hooks/useCurrentUser";
+import logo from "../assets/Logo_Hometaskmanager.png";
 
 type Props = { children: ReactNode };
 
@@ -34,7 +35,11 @@ export default function DashboardLayout({ children }: Props) {
         <Button variant="outline-secondary" onClick={() => setShowSidebar(true)}>
           ☰
         </Button>
-        <div className="fw-bold">HomeTasker</div>
+        <img
+          src={logo}
+          alt="Home Task Manager"
+          style={{ height: 100 }}
+        />
         <div style={{ width: 36 }} />
       </div>
 
@@ -46,7 +51,13 @@ export default function DashboardLayout({ children }: Props) {
             lg={2}
             className="d-none d-md-block border-end bg-white min-vh-100 p-3"
           >
-            <div className="fw-bold fs-5 mb-1">HomeTasker</div>
+            <div className="mb-2">
+              <img
+                src={logo}
+                alt="Home Task Manager"
+                style={{ height: 100 }}
+              />
+            </div>
             <div className="text-muted small mb-3">{householdName}</div>
             {roleLabel && (
               <div className="text-muted small mb-3">
