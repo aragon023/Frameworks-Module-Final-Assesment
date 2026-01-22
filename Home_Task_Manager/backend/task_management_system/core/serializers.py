@@ -202,9 +202,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
 
         # 2. Create user and assign household
+        # First user in a new household should be admin.
         user = User(
             **validated_data,
-            household=household
+            household=household,
+            role="admin",
         )
         user.set_password(password)
         user.save()

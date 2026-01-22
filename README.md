@@ -1,4 +1,4 @@
-# Home Task Manager
+**Note (University project / email sandbox):** This project uses a MailerSend test domain on the free tier. Email delivery may be limited to verified recipients (e.g., the account owner). For full delivery to any email, a custom domain must be verified in MailerSend.\n\n# Home Task Manager
 
 Designed and Developed by: Mauricio Aragon Ramos  
 Course: UCD Full Stack Development - Frameworks (Final Assessment)
@@ -253,3 +253,4 @@ Important
 - Calendar + rewards expansions
 - File uploads for avatars
 - Move JWT storage to HttpOnly cookies
+
