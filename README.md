@@ -1,10 +1,10 @@
 **Note (University project / email sandbox):** This project uses a MailerSend test domain on the free tier. Email delivery may be limited to verified recipients (e.g., the account owner). For full delivery to any email, a custom domain must be verified in MailerSend.\n\n# Home Task Manager
 
 Designed and Developed by: Mauricio Aragon Ramos  
-Course: UCD Full Stack Development - Frameworks (Final Assessment)
+Course: UCD Full Stack Development - Final Course Project 
 
 Repository:
-https://github.com/aragon023/Frameworks-Module-Final-Assesment.git
+https://github.com/aragon023/Frameworks-Module-Final-Assesment.git | I have kept this folder to make it easier as it is a continuation of the frameworks module. 
 
 Deployment (Render):
 - Frontend: https://frameworks-module-final-assesment.onrender.com
@@ -215,7 +215,7 @@ Test modules include:
 
 Note
 - Tests are configured via pytest.ini (pytest-django)
-- There are no frontend automated tests in this repository yet
+- There are no frontend automated tests in this repository
 
 ---
 
